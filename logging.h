@@ -8,12 +8,12 @@
 #include <string>
 #include <ostream>
 #include <sstream>
+#include <iostream>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <stdio.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
 #include "timestamp.h"
 
 namespace small_rpc {

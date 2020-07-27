@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.2)
 project(small_rpc)
 
+# dependencies
+find_package(GTest REQUIRED)
+find_package(gflags REQUIRED)
+
 # compile flags
 set(CMAKE_CXX_FLAGS -g)
 
@@ -9,7 +13,7 @@ file(GLOB lib_srcs *.cpp *.h)
 message(STATUS "Library " "small_rpc")
 add_library(small_rpc ${lib_srcs})
 target_link_libraries(small_rpc
-    PUBLIC pthread
+    PUBLIC pthread gflags gtest
 )
 target_include_directories(small_rpc
     PUBLIC ${CMAKE_SOURCE_DIR}
