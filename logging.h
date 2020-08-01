@@ -23,6 +23,7 @@ const int NOTICE = 1;
 const int WARNING = 2;
 const int FATAL = 3;
 
+// 借鉴了brpc中相关设计思路
 class _LogStream : public std::stringbuf, public std::ostream{
 public:
     _LogStream() : std::ostream(static_cast<std::stringbuf*>(this)) {}
