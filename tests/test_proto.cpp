@@ -17,11 +17,6 @@ int main(int argc, char** argv) {
         google::ShutDownCommandLineFlags();
     });
 
-    if (!small_rpc::init_log("log/app.log", small_rpc::DEBUG)) {
-        fprintf(stderr, "failed to init_log\n");
-        return 1;
-    }
-
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
