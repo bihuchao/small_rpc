@@ -40,7 +40,9 @@ TEST(logging, test_severity) {
     LOG_DEBUG << "debug message";
     LOG_NOTICE << "notice message";
     LOG_WARNING << "warning message";
-    LOG_FATAL << "fatal message";
+    PLOG_NOTICE << "plog notice message";
+    // LOG_FATAL << "fatal message";
+    // PLOG_FATAL << "fatal message";
 }
 
 TEST(logging, test_multithread) {

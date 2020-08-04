@@ -11,6 +11,7 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -149,7 +150,8 @@ extern _Logger _logger;
 
 class _LogRecord {
 public:
-    _LogRecord(const char* file, int lineno, int severity) : _stream(std::make_shared<_LogStream>()) {
+    _LogRecord(const char* file, int lineno, int severity, bool abort = false)
+            : _abort(abort), _stream(std::make_shared<_LogStream>()) {
         const char* severity_map[] = {
             "DEBUG", "NOTICE", "WARNING", "FATAL"
         };
@@ -160,12 +162,28 @@ public:
             << "[" << file << ":" << lineno << "]: ";
     }
     _LogStream& stream() { return *_stream; }
-    ~_LogRecord() {
+    virtual ~_LogRecord() {
         stream() << "\n";
         small_rpc::_logger.append(_stream);
+        if (_abort) { abort(); }
     }
 private:
+    bool _abort;
     std::shared_ptr<_LogStream> _stream;
+};
+
+class _PLogRecord : public _LogRecord {
+public:
+    _PLogRecord(const char* file, int lineno, int severity, bool abort = false)
+            : _LogRecord(file, lineno, severity, abort) {
+    }
+    ~_PLogRecord() {
+        char buf[ErrorMsgLen] = {'\0'};
+        stream() << " with err_no: " << errno
+            << ", err_msg: " << strerror_r(errno, buf, ErrorMsgLen) << ".";
+    }
+public:
+    static const int ErrorMsgLen = 256;
 };
 
 inline bool set_severity(int severity) { return _logger.set_severity(severity); }
@@ -181,6 +199,7 @@ inline bool init_log(const char* logfile, int severity, int rollover_min = 30) {
 
 }; // namespace small_rpc
 
+// LOG_*
 #define LOG_DEBUG if (small_rpc::_logger.severity() <= small_rpc::DEBUG) \
     small_rpc::_LogRecord(__FILE__, __LINE__, small_rpc::DEBUG).stream()
 
@@ -191,4 +210,17 @@ inline bool init_log(const char* logfile, int severity, int rollover_min = 30) {
     small_rpc::_LogRecord(__FILE__, __LINE__, small_rpc::WARNING).stream()
 
 #define LOG_FATAL if (small_rpc::_logger.severity() <= small_rpc::FATAL) \
-    small_rpc::_LogRecord(__FILE__, __LINE__, small_rpc::FATAL).stream()
+    small_rpc::_LogRecord(__FILE__, __LINE__, small_rpc::FATAL, true).stream()
+
+// PLOG_*
+#define PLOG_DEBUG if (small_rpc::_logger.severity() <= small_rpc::DEBUG) \
+    small_rpc::_PLogRecord(__FILE__, __LINE__, small_rpc::DEBUG).stream()
+
+#define PLOG_NOTICE if (small_rpc::_logger.severity() <= small_rpc::NOTICE) \
+    small_rpc::_PLogRecord(__FILE__, __LINE__, small_rpc::NOTICE).stream()
+
+#define PLOG_WARNING if (small_rpc::_logger.severity() <= small_rpc::WARNING) \
+    small_rpc::_PLogRecord(__FILE__, __LINE__, small_rpc::WARNING).stream()
+
+#define PLOG_FATAL if (small_rpc::_logger.severity() <= small_rpc::FATAL) \
+    small_rpc::_PLogRecord(__FILE__, __LINE__, small_rpc::FATAL, true).stream()
