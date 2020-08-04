@@ -224,3 +224,9 @@ inline bool init_log(const char* logfile, int severity, int rollover_min = 30) {
 
 #define PLOG_FATAL if (small_rpc::_logger.severity() <= small_rpc::FATAL) \
     small_rpc::_PLogRecord(__FILE__, __LINE__, small_rpc::FATAL, true).stream()
+
+// PLOG_*_IF
+#define PLOG_DEBUG_IF(expr) if (expr) PLOG_DEBUG
+#define PLOG_NOTICE_IF(expr) if (expr) PLOG_NOTICE
+#define PLOG_WARNING_IF(expr) if (expr) PLOG_WARNING
+#define PLOG_FATAL_IF(expr) if (expr) PLOG_FATAL

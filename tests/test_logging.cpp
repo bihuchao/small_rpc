@@ -37,12 +37,21 @@ int main(int argc, char** argv) {
 }
 
 TEST(logging, test_severity) {
+    // LOG_*
     LOG_DEBUG << "debug message";
     LOG_NOTICE << "notice message";
     LOG_WARNING << "warning message";
-    PLOG_NOTICE << "plog notice message";
     // LOG_FATAL << "fatal message";
+
+    // PLOG_*
+    PLOG_NOTICE << "plog notice message";
     // PLOG_FATAL << "fatal message";
+
+    // PLOG_*_IF
+    PLOG_DEBUG_IF(true) << "plog true debug message";
+    PLOG_DEBUG_IF(false) << "plog false debug message";
+    PLOG_NOTICE_IF(true) << "plog true notice message";
+    PLOG_NOTICE_IF(false) << "plog false notice message";
 }
 
 TEST(logging, test_multithread) {
