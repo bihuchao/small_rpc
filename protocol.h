@@ -13,9 +13,9 @@ namespace small_rpc {
 // Context
 class Context {
 public:
-    virtual int parse(ReadBuffer& rd_buf) = 0;
+    virtual ParseResult parse(ReadBuffer& rd_buf) = 0;
     virtual ~Context() {}
-    virtual void print(std::ostream& os) const = 0;
+    virtual std::ostream& print(std::ostream& os) const = 0;
     virtual const std::string& payload() const = 0;
     virtual ConnType conn_type() const = 0;
     virtual const std::string& service() const = 0;
@@ -24,8 +24,7 @@ friend std::ostream& operator<<(std::ostream& os, const Context& ctx);
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Context& ctx) {
-    ctx.print(os);
-    return os;
+    return ctx.print(os);
 }
 
 // Protocol

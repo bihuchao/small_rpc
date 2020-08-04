@@ -15,6 +15,13 @@ enum ConnType {
     ConnType_Pool   = 2;
 };
 
+// ParseResult
+enum ParseResult {
+    ParseResult_Success         = 0;
+    ParseResult_Error           = 1;
+    ParseResult_No_Enough_Data  = 2;
+};
+
 // this message is just use for namespace
 message HTTPMethod {
 

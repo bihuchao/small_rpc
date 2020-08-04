@@ -5,14 +5,43 @@
 #pragma once
 
 #include "protocol.h"
+#include <string>
+#include <map>
 
 namespace small_rpc {
 
 // HTTPContext
 class HTTPContext : public Context {
 public:
-    HTTPContext() {}
+    HTTPContext() : _stage(0), _body_size(0) {}
+
     virtual ~HTTPContext() {}
+
+    ParseResult parse(ReadBuffer& rd_buf);
+
+    std::ostream& print(std::ostream& os) const;
+
+    const std::string& payload() const { return _body; }
+
+    // TODO: judge by Connection header
+    ConnType conn_type() const { return ConnType_Short; };
+
+private:
+    ParseResult _parse_headline(ReadBuffer& rd_buf);
+    ParseResult _parse_headers(ReadBuffer& rd_buf);
+    ParseResult _parse_body(ReadBuffer& rd_buf);
+
+public:
+    static const size_t MaxHeadlineSize; // 65536
+    static const size_t MaxHeaderSize; // 65536
+
+private:
+    int _stage;
+    size_t _body_size;
+    // TODO: change to bufferview, 参考stringview
+    std::string _headline;
+    std::map<std::string, std::string> _headers;
+    std::string _body;
 };
 
 // HTTPProtocol
