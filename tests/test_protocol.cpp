@@ -32,7 +32,7 @@ public:
     }
 };
 
-TEST(Protocol, test_http) {
+TEST(Protocol, test_protocol) {
     TestReadBuffer rd_buf;
     small_rpc::HTTPProtocol http;
 
@@ -47,4 +47,21 @@ TEST(Protocol, test_http) {
 
     rd_buf.set_buf("fake method");
     EXPECT_EQ(http.judge_protocol(rd_buf), false);
+}
+
+TEST(Protocol, test_http) {
+    TestReadBuffer rd_buf;
+    small_rpc::HTTPProtocol http;
+
+    rd_buf.set_buf("GET HTTP/1.1 /hello/world\r\n"
+        "Content-Length:10\r\n"
+        "Connection:KeepAlive\r\n"
+        "\r\n"
+        "helloworld");
+
+    EXPECT_EQ(http.judge_protocol(rd_buf), true);
+
+    small_rpc::Context* ctx = http.new_context();
+    LOG_DEBUG << small_rpc::ParseResult_Name(ctx->parse(rd_buf));
+    LOG_DEBUG << *ctx;
 }

@@ -75,7 +75,7 @@ ParseResult HTTPContext::_parse_headers(ReadBuffer& rd_buf) {
                 std::string(tmp + 1,  rd_buf.begin() - tmp + n - 1);
             if (tmp - rd_buf.begin() == 14 &&
                     strncmp("Content-Length", rd_buf.begin(), 14) == 0) {
-                std::string temp(rd_buf.begin() + 14, rd_buf.begin() + n);
+                std::string temp(rd_buf.begin() + 15, rd_buf.begin() + n);
                 _body_size = atoi(temp.c_str());
                 LOG_NOTICE << "_body_size = " << _body_size;
             }
@@ -99,7 +99,14 @@ ParseResult HTTPContext::_parse_body(ReadBuffer& rd_buf) {
 }
 
 std::ostream& HTTPContext::print(std::ostream& os) const {
-    os << "HTTPContext, stage: " << _stage << ", body_size: " << _body_size;
+    os << "HTTPContext:"
+        << "\nstage: " << _stage
+        << "\nheadline: " << _headline
+        << "\nbody_size: " << _body_size
+        << "\nheaders: ";
+    for (const auto& header : _headers) {
+        os << "\n    " << header.first << ": " << header.second;
+    }
     return os;
 }
 

@@ -26,6 +26,9 @@ public:
     // TODO: judge by Connection header
     ConnType conn_type() const { return ConnType_Short; };
 
+    const std::string& service() const { return _service; }
+    const std::string& method() const { return _method; }
+
 private:
     ParseResult _parse_headline(ReadBuffer& rd_buf);
     ParseResult _parse_headers(ReadBuffer& rd_buf);
@@ -42,6 +45,7 @@ private:
     std::string _headline;
     std::map<std::string, std::string> _headers;
     std::string _body;
+    std::string _service, _method;
 };
 
 // HTTPProtocol
@@ -54,8 +58,7 @@ public:
     bool judge_protocol(ReadBuffer& rd_buf);
 
     Context* new_context() {
-        // return new HTTPContext();
-        return nullptr;
+        return new HTTPContext();
     }
 
     const char* name() { return HTTP; }
