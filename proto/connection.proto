@@ -40,3 +40,11 @@ enum _HTTPMethod {
 };
 
 };
+
+enum TCPConnectionStatus {
+    TCPConnection_NeedRead     = 0;
+    TCPConnection_Error        = 1;
+    TCPConnection_ReadSuccess  = 2;
+    TCPConnection_NeedWrite    = 3;
+    TCPConnection_WriteSuccess = 4;
+};

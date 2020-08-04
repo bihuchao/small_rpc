@@ -67,5 +67,4 @@ public:
     static const size_t HTTPMethodMaxLen = 7;
 };
 
-
 }; // namespace small_rpc
