@@ -1,0 +1,35 @@
+// Use of this source code is governed by a BSD-style license.
+//
+// Author: Huchao Bi (bihuchao at qq dot com)
+
+syntax = "proto3";
+
+option cc_generic_services = true;
+
+package small_rpc;
+
+// ConnType
+enum ConnType {
+    ConnType_Short  = 0;
+    ConnType_Single = 1;
+    ConnType_Pool   = 2;
+};
+
+// this message is just use for namespace
+message HTTPMethod {
+
+// HTTPMethod, steal from rfc-2616
+// enum fields must be continuous.
+enum _HTTPMethod {
+    GET     = 0;
+    POST    = 1;
+    HEAD    = 2;
+    OPTIONS = 3;
+    PUT     = 4;
+    PATCH   = 5;
+    DELETE  = 6;
+    TRACE   = 7;
+    CONNECT = 8;
+};
+
+};
