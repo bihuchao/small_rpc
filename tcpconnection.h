@@ -22,14 +22,14 @@ public:
 
     void handle_events(int events);
 
+    void set_context(Context* context) { _context = context; }
+    Context* context() { return _context; }
+
     void set_data_read_callback(const DataReadCallback& data_read_callback) {
         _data_read_callback = data_read_callback;
     }
     void set_request_callback(const DataReadCallback& request_callback) {
         _request_callback = request_callback;
-    }
-    void set_response_callback(const DataReadCallback& response_callback) {
-        _response_callback = response_callback;
     }
     void set_write_complete_callback(const DataReadCallback& write_complete_callback) {
         _write_complete_callback = write_complete_callback;
@@ -45,7 +45,6 @@ public:
 private:
     DataReadCallback _data_read_callback;
     RequestCallback _request_callback;
-    ResponseCallback _response_callback;
     WriteCompleteCallback _write_complete_callback;
 
     size_t _protocol;
@@ -55,6 +54,9 @@ private:
     WriteBuffer _wbuf;
 
     TCPConnectionStatus _status;
+
+// TODO move friend class
+friend class Server;
 };
 
 }; // namespace small_rpc

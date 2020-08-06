@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option cc_generic_services = true;
+
+package example;
+
+message EchoRequest {
+    uint64 logid   = 1;
+    bytes  message = 2;
+};
+
+message EchoResponse {
+    uint64 logid  = 1;
+    bytes  result = 2;
+};
+
+service EchoService {
+    rpc echo(EchoRequest) returns (EchoResponse);
+};

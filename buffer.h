@@ -20,6 +20,7 @@ public:
     size_t writeable() const { return _data.size() - _windex; }
     char* begin() { return &_data[_rindex]; }
     char* end() { return &_data[_windex]; }
+    const char* data() const { return &_data[0]; }
 
 public:
     static const int InitialBufferSize = 1024;
@@ -27,6 +28,25 @@ public:
 protected:
     size_t _rindex, _windex;
     std::vector<char> _data;
+};
+
+// BufferView
+class BufferView {
+public:
+    BufferView() : _buf(nullptr), _begin(0), _end(0) {}
+
+    BufferView(const Buffer* buf, size_t begin, size_t end) : _buf(buf), _begin(begin), _end(end) {}
+
+    BufferView(const Buffer& buf, const char* begin, size_t length)
+        : _buf(&buf), _begin(begin - _buf->data()), _end(_begin + length) {}
+
+    std::string str() const {
+        if (!_buf) { return std::string(); }
+        return std::string(_buf->data() + _begin, _buf->data() + _end);
+    }
+private:
+    const Buffer* _buf;
+    size_t _begin, _end;
 };
 
 // ReadBuffer

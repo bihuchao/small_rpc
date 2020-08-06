@@ -16,10 +16,10 @@ public:
     virtual ParseResult parse(ReadBuffer& rd_buf) = 0;
     virtual ~Context() {}
     virtual std::ostream& print(std::ostream& os) const = 0;
-    virtual const std::string& payload() const = 0;
+    virtual const BufferView& payload() const = 0;
     virtual ConnType conn_type() const = 0;
-    virtual const std::string& service() const = 0;
-    virtual const std::string& method() const = 0;
+    virtual const BufferView& service() const = 0;
+    virtual const BufferView& method() const = 0;
 friend std::ostream& operator<<(std::ostream& os, const Context& ctx);
 };
 

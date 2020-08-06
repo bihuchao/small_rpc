@@ -54,3 +54,13 @@ TEST(Buffer, test_read_buffer) {
     EXPECT_EQ(rd_buf.writeable(), empty);
     EXPECT_EQ(rd_buf.find_crlf(6), -1);
 }
+
+TEST(Buffer, test_buffer_view) {
+    TestReadBuffer rd_buf;
+    size_t empty = 100;
+    rd_buf.set_buf("hello\r\nworld", empty);
+    small_rpc::BufferView buf_view(&rd_buf,0, 5);
+    LOG_DEBUG << buf_view.str();
+    small_rpc::BufferView buf_view2(&rd_buf,7, 12);
+    LOG_DEBUG << buf_view2.str();
+}

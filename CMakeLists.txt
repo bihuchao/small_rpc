@@ -26,6 +26,7 @@ target_link_libraries(proto
 )
 
 # small_rpc lib
+message(STATUS "------------- lib -------------")
 file(GLOB lib_srcs *.cpp *.h protocol/*.cpp protocol/*.h)
 message(STATUS "Library " "small_rpc")
 add_library(small_rpc ${lib_srcs})
@@ -37,6 +38,7 @@ target_include_directories(small_rpc
 )
 
 # unittests
+message(STATUS "---------- unittests ----------")
 file(GLOB ut_srcs tests/test_*.cpp)
 foreach(ut_src ${ut_srcs})
     string(REGEX MATCH "([^/]+).cpp" ut_name ${ut_src})
@@ -46,3 +48,13 @@ foreach(ut_src ${ut_srcs})
         PUBLIC small_rpc
     )
 endforeach(ut_src)
+
+# examples
+message(STATUS "---------- examples -----------")
+file(GLOB example_dirs examples/*)
+foreach(example_dir ${example_dirs})
+    string(REGEX MATCH "([^/]+)$" example_name ${example_dir})
+    message(STATUS "Example " ${example_name})
+    add_subdirectory(examples/${example_name})
+endforeach(example_dir)
+message(STATUS "------------- end -------------")

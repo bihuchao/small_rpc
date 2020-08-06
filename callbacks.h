@@ -16,9 +16,7 @@ using NewConnectionCallback = std::function<void (TCPConnection*)>;
 using DataReadCallback = std::function<void (TCPConnection*)>;
 // message分包完毕
 using RequestCallback = std::function<void (TCPConnection*)>;
-// message组包完毕
-using ResponseCallback = std::function<void (TCPConnection*)>;
-// 数据写完
+// writebuffer数据写完
 using WriteCompleteCallback = std::function<void (TCPConnection*)>;
 
 }; // namespace small_rpc

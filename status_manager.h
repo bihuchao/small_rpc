@@ -9,10 +9,7 @@
 #include <chrono>
 #include <signal.h>
 #include <errno.h>
-#include <stdio.h>
 #include <string.h>
-
-#include <iostream>
 
 namespace small_rpc {
 
@@ -30,25 +27,9 @@ private:
     }
 
 public:
-    bool register_signals() {
-        struct sigaction sa;
-        sa.sa_flags = 0;
-        sigemptyset(&sa.sa_mask);
-        sigaddset(&sa.sa_mask, SIGINT);
-        sa.sa_handler = StatusManager::_handle_signal;
-        if (sigaction(SIGINT, &sa, nullptr) == -1) {
-            printf("StatusManager failed to invoke sigaction, err_no: %d, err_msg : %s\n",
-                errno, strerror(errno));
-            return false;
-        }
-        return true;
-    }
+    bool register_signals();
 
-    void wait_for_signal(int timeout_ms = 500) {
-        std::unique_lock<std::mutex> ul(_mtx);
-        std::cout << timeout_ms << std::endl;
-        _cv.wait_until(ul, std::chrono::milliseconds(timeout_ms) + std::chrono::system_clock::now());
-    }
+    void wait_for_signal(int timeout_ms = 500);
 
     bool is_close() {
         std::unique_lock<std::mutex> ul(_mtx);

@@ -13,6 +13,7 @@ public:
     Channel(int fd = -1, EventLoop* el = nullptr)
         : _fd(fd), _event(0), _sevent(0), _el(el) {}
     int fd() const { return _fd; }
+    EventLoop* el() const { return _el; }
     int event() const { return _event; }
     int sevent() const { return _sevent; }
     void set_event(int event) { _event = event; }

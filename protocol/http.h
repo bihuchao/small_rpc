@@ -13,7 +13,7 @@ namespace small_rpc {
 // HTTPContext
 class HTTPContext : public Context {
 public:
-    HTTPContext() : _stage(0), _body_size(0) {}
+    HTTPContext() : _stage(0), _body_size(0), _http_method(-1), _conn_type(ConnType_Short) {}
 
     virtual ~HTTPContext() {}
 
@@ -21,16 +21,15 @@ public:
 
     std::ostream& print(std::ostream& os) const;
 
-    const std::string& payload() const { return _body; }
+    const BufferView& payload() const { return _body; }
 
-    // TODO: judge by Connection header
-    ConnType conn_type() const { return ConnType_Short; };
+    ConnType conn_type() const { return _conn_type; };
 
-    const std::string& service() const { return _service; }
-    const std::string& method() const { return _method; }
+    const BufferView& service() const { return _service; }
+    const BufferView& method() const { return _method; }
 
 private:
-    ParseResult _parse_headline(ReadBuffer& rd_buf);
+    ParseResult _parse_request_line(ReadBuffer& rd_buf);
     ParseResult _parse_headers(ReadBuffer& rd_buf);
     ParseResult _parse_body(ReadBuffer& rd_buf);
 
@@ -41,11 +40,11 @@ public:
 private:
     int _stage;
     size_t _body_size;
-    // TODO: change to bufferview, 参考stringview
-    std::string _headline;
+    int _http_method;
+    ConnType _conn_type;
+    BufferView _http_url, _http_version, _request_line, _service, _method;
+    BufferView _body;
     std::map<std::string, std::string> _headers;
-    std::string _body;
-    std::string _service, _method;
 };
 
 // HTTPProtocol

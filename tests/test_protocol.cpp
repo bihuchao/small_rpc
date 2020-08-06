@@ -53,15 +53,20 @@ TEST(Protocol, test_http) {
     TestReadBuffer rd_buf;
     small_rpc::HTTPProtocol http;
 
-    rd_buf.set_buf("GET HTTP/1.1 /hello/world\r\n"
-        "Content-Length:10\r\n"
-        "Connection:KeepAlive\r\n"
+    rd_buf.set_buf("GET /hello/world HTTP/1.1\r\n"
+        "Content-Length: 10\r\n"
+        "Connection: Keep-alive\r\n"
         "\r\n"
         "helloworld");
 
     EXPECT_EQ(http.judge_protocol(rd_buf), true);
 
     small_rpc::Context* ctx = http.new_context();
+    small_rpc::HTTPContext* http_ctx = dynamic_cast<small_rpc::HTTPContext*>(ctx);
+    EXPECT_TRUE(http_ctx != nullptr);
     LOG_DEBUG << small_rpc::ParseResult_Name(ctx->parse(rd_buf));
     LOG_DEBUG << *ctx;
+    EXPECT_EQ(http_ctx->conn_type(), small_rpc::ConnType_Single);
+    EXPECT_EQ(http_ctx->service().str(), "hello");
+    EXPECT_EQ(http_ctx->method().str(), "world");
 }
