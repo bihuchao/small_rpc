@@ -78,31 +78,27 @@ void Server::new_connection_callback(TCPConnection* conn) {
 // data_read_callback
 void Server::data_read_callback(TCPConnection* conn) {
     LOG_DEBUG << "in server data_read_callback";
-    if (!conn->context()) {
-        while (conn->_protocol < _protocols.size() &&
-                conn->_rbuf.readable() > _protocols[conn->_protocol]->judge_protocol_size()) {
-            if (_protocols[conn->_protocol]->judge_protocol(conn->_rbuf)) {
-                conn->set_context(_protocols[conn->_protocol]->new_context());
-                break;
-            } else {
-                ++conn->_protocol;
-            }
-        }
-        if (!conn->context()) {
-            if (conn->_protocol >= _protocols.size()) {
-                LOG_WARNING << "can't parse with all protocol";
-                conn->set_status(small_rpc::TCPConnection_Error);
-                return ;
-            }
+
+    ParseProtocolStatus res;
+    while (conn->_protocol < _protocols.size()) {
+        res = _protocols[conn->_protocol]->parse_request(conn->_rbuf, conn->mutable_context());
+        if (res == ParseProtocol_TryAnotherProtocol) {
+            ++conn->_protocol;
+        } else {
+            break;
         }
     }
-
-    int res = conn->context()->parse(conn->_rbuf);
-    if (res == ParseResult_No_Enough_Data) {
-        return ;
-    } else if (res == ParseResult_Error) {
-        LOG_WARNING << "parse failed with protocol";
+    if (conn->_protocol >= _protocols.size()) {
+        LOG_WARNING << "can't parse with all protocol";
         conn->set_status(small_rpc::TCPConnection_Error);
+        return ;
+    }
+    if (res == ParseProtocol_Error) {
+        LOG_WARNING << "can't parse with all protocol";
+        conn->set_status(small_rpc::TCPConnection_Error);
+        return ;
+    }
+    if (res == ParseProtocol_NoEnoughData) {
         return ;
     }
     LOG_DEBUG << "get parse context: " << *conn->context();
@@ -112,9 +108,9 @@ void Server::data_read_callback(TCPConnection* conn) {
 // request_callback
 void Server::request_callback(TCPConnection* conn) {
     // 执行 应用层函数
-    const std::string& pb_data = conn->context()->payload().str();
-    const std::string& service_name = conn->context()->service().str();
-    const std::string& method_name = conn->context()->method().str();
+    const std::string& pb_data = conn->context()->payload_view().str();
+    const std::string& service_name = conn->context()->service();
+    const std::string& method_name = conn->context()->method();
     LOG_DEBUG << "in request_callback: " << service_name << " " << method_name;
 
     ::google::protobuf::Service* service = nullptr;
@@ -154,7 +150,10 @@ void Server::response_callback(ReqRespConnPack* pack) {
     TCPConnection* conn = pack->_conn;
     delete pack;
 
-    conn->_wbuf.append_extra(resp_str);
+    conn->_ctx->set_rpc_status(RpcStatus_OK);
+    *conn->_ctx->mutable_payload() = std::move(resp_str);
+    bool ret = _protocols[conn->_protocol]->pack_response(conn->_wbuf, conn->context());
+    // TODO judge ret
 
     conn->set_event(EPOLLOUT);
     // TODO 目前只支持同步调用 异步调用待支持

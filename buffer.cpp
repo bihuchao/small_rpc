@@ -8,33 +8,13 @@
 
 namespace small_rpc {
 
-const char* ReadBuffer::CRLF = "\r\n";
-
-// socket => read_buffer
-// -1 : eagain
-//  0 : eof
-// >0 : data
-int ReadBuffer::read_fd(int fd) {
-    if (writeable() == 0) {
-        _data.resize(_data.size() * 2);
-    }
-    int n = read(fd, end(), writeable());
-    if (n == -1) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            return -1;
-        } else {
-            PLOG_FATAL << "failed to invoke read";
-        }
-    } else {
-        _windex += n;
-    }
-    return n;
-}
-
 // find_crlf in read_buffer
 // -1  : not found
 // >=0 : found \r\n
-int ReadBuffer::find_crlf(const size_t& len) {
+int Buffer::find_crlf(const size_t& len) {
+
+    static const char* CRLF = "\r\n";
+    static const size_t CRLFLen = 2;
 
     void* ret = memmem(static_cast<const void*>(begin()), len,
         static_cast<const void*>(CRLF), CRLFLen);
@@ -44,7 +24,10 @@ int ReadBuffer::find_crlf(const size_t& len) {
 }
 
 // write_buffer => socket
-int WriteBuffer::write_fd(int fd) {
+// -1 - eagain
+// 0  - eof
+// >0 - data size
+int Buffer::write_fd(int fd) {
     int total = 0;
     if (readable()) {
         int n = write(fd, begin(), readable());
@@ -73,6 +56,27 @@ int WriteBuffer::write_fd(int fd) {
         }
     }
     return total;
+}
+
+// socket => read_buffer
+// -1 : eagain
+//  0 : eof
+// >0 : data size
+int Buffer::read_fd(int fd) {
+    if (writeable() == 0) {
+        _data.resize(_data.size() * 2);
+    }
+    int n = read(fd, end(), writeable());
+    if (n == -1) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            return -1;
+        } else {
+            PLOG_FATAL << "failed to invoke read";
+        }
+    } else {
+        _windex += n;
+    }
+    return n;
 }
 
 }; // namespace small_rpc

@@ -8,7 +8,7 @@
 #include "buffer.h"
 #include "protocol.h"
 #include "callbacks.h"
-#include "connection.pb.h"
+#include "protocol.pb.h"
 
 namespace small_rpc {
 
@@ -21,9 +21,6 @@ public:
     virtual ~TCPConnection() {}
 
     void handle_events(int events);
-
-    void set_context(Context* context) { _context = context; }
-    Context* context() { return _context; }
 
     void set_data_read_callback(const DataReadCallback& data_read_callback) {
         _data_read_callback = data_read_callback;
@@ -39,6 +36,10 @@ public:
 
     void set_status(const TCPConnectionStatus& status) { _status = status; }
 
+    const Context* context() { return _ctx; }
+    Context** mutable_context() { return &_ctx; }
+    void set_context(Context* ctx) { _ctx = ctx; }
+
 public:
     static const size_t InitialBufferSize = 10240;
 
@@ -47,13 +48,12 @@ private:
     RequestCallback _request_callback;
     WriteCompleteCallback _write_complete_callback;
 
-    size_t _protocol;
-    Context* _context;
-
-    ReadBuffer _rbuf;
-    WriteBuffer _wbuf;
+    Buffer _rbuf, _wbuf;
 
     TCPConnectionStatus _status;
+
+    size_t _protocol;
+    Context* _ctx;
 
 // TODO move friend class
 friend class Server;

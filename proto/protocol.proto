@@ -15,11 +15,18 @@ enum ConnType {
     ConnType_Pool   = 2;
 };
 
-// ParseResult
-enum ParseResult {
-    ParseResult_Success         = 0;
-    ParseResult_Error           = 1;
-    ParseResult_No_Enough_Data  = 2;
+// RpcStatus
+enum RpcStatus {
+    RpcStatus_OK           = 0;
+    RpcStatus_INVALID_PATH = 1;
+};
+
+// ParseProtocol
+enum ParseProtocolStatus {
+    ParseProtocol_Success            = 0;
+    ParseProtocol_Error              = 1;
+    ParseProtocol_NoEnoughData       = 2;
+    ParseProtocol_TryAnotherProtocol = 3;
 };
 
 // this message is just use for namespace

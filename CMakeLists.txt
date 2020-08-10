@@ -27,7 +27,7 @@ target_link_libraries(proto
 
 # small_rpc lib
 message(STATUS "------------- lib -------------")
-file(GLOB lib_srcs *.cpp *.h protocol/*.cpp protocol/*.h)
+file(GLOB lib_srcs *.cpp *.h protocols/*.cpp protocols/*.h)
 message(STATUS "Library " "small_rpc")
 add_library(small_rpc ${lib_srcs})
 target_link_libraries(small_rpc

@@ -10,6 +10,7 @@
 #include "eventloop.h"
 #include "tcpconnection.h"
 #include "acceptor.h"
+#include <signal.h>
 
 namespace small_rpc {
 
@@ -46,7 +47,11 @@ public:
     void set_thread_num(size_t thread_num) { _thread_num = thread_num; }
 
     bool start() {
-        // TODO 在本线程中启动server
+        // 在本线程中启动server
+        if (_thread_num == 0) {
+            // if (!_register_sigint()) { return false; }
+            _el.loop();
+        }
         return true;
     }
 
@@ -65,11 +70,12 @@ public:
     void write_complete_callback(TCPConnection* conn);
 
 private:
-
     // find service and method
     bool _find_service_method(const std::string& service_name,
             const std::string& method_name, ::google::protobuf::Service*& service,
             const ::google::protobuf::MethodDescriptor*& method);
+
+    // TODO register_sigint
 
 private:
     std::vector<Protocol*> _protocols;

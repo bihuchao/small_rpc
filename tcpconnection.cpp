@@ -12,7 +12,7 @@
 namespace small_rpc {
 
 TCPConnection::TCPConnection(int conn, EventLoop* el) : Channel(conn),
-        _protocol(0), _context(nullptr), _status(TCPConnection_NeedRead) {
+        _protocol(0), _ctx(nullptr), _status(TCPConnection_NeedRead) {
 
     set_nonblocking(_fd);
     _event = EPOLLIN;

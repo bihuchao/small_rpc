@@ -11,3 +11,13 @@ string(REGEX MATCH ".*/" echo_proto_dir ${echo_proto_headers})
 target_include_directories(echo_server
     PUBLIC ${echo_proto_dir}
 )
+
+add_executable(echo_client ${echo_proto_srcs} ${echo_proto_headers} client.cpp)
+target_link_libraries(echo_client
+    PUBLIC small_rpc
+)
+
+string(REGEX MATCH ".*/" echo_proto_dir ${echo_proto_headers})
+target_include_directories(echo_client
+    PUBLIC ${echo_proto_dir}
+)
