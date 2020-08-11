@@ -14,17 +14,15 @@ bool StatusManager::register_signals() {
     sigemptyset(&sa.sa_mask);
     sigaddset(&sa.sa_mask, SIGINT);
     sa.sa_handler = StatusManager::_handle_signal;
-    if (sigaction(SIGINT, &sa, nullptr) == -1) {
-        PLOG_WARNING << "StatusManager failed to invoke sigaction, err_no: %d, err_msg : %s";
-        return false;
-    }
+    int err = sigaction(SIGINT, &sa, nullptr);
+    PLOG_FATAL_IF(err == -1) << "StatusManager failed to invoke sigaction";
     return true;
 }
 
 // wait_for_signal
 void StatusManager::wait_for_signal(int timeout_ms) {
     std::unique_lock<std::mutex> ul(_mtx);
-    std::cout << timeout_ms << std::endl;
+    // LOG_DEBUG << "StatusManager start to wait " << timeout_ms << " ms";
     _cv.wait_until(ul, std::chrono::milliseconds(timeout_ms)
         + std::chrono::system_clock::now());
 }

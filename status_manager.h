@@ -13,6 +13,7 @@
 
 namespace small_rpc {
 
+// StatusManager
 class StatusManager {
 public:
     static StatusManager& get_instance() {
@@ -27,16 +28,20 @@ private:
     }
 
 public:
+    // register_signals (SIGINT)
     bool register_signals();
 
+    // wait_for_signal
     void wait_for_signal(int timeout_ms = 500);
 
+    // is_close
     bool is_close() {
         std::unique_lock<std::mutex> ul(_mtx);
         return _exit;
     }
 
 private:
+    // _set_close
     void _set_close() {
         std::unique_lock<std::mutex> ul(_mtx);
         _exit = true;

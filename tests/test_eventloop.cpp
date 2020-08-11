@@ -9,15 +9,7 @@
 #include <vector>
 #include "eventloop.h"
 #include <thread>
-
-DEFINE_int32(wait_ms, 500, "wait ms");
-
-bool is_stop = false;
-
-void deal_sig_int(int signo) {
-    LOG_NOTICE << "in deal_sig_int: " << signo;
-    is_stop = true;
-}
+#include "status_manager.h"
 
 int main(int argc, char** argv) {
     google::ParseCommandLineFlags(&argc, &argv, false);
@@ -27,24 +19,21 @@ int main(int argc, char** argv) {
         google::ShutDownCommandLineFlags();
     });
 
-    struct sigaction sa;
-    sa.sa_flags = 0;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_handler = deal_sig_int;
-    int err = sigaction(SIGINT, &sa, nullptr);
-    PLOG_FATAL_IF(err == -1) << "failed to invoke sigaction";
-
     LOG_DEBUG << "in main";
     small_rpc::EventLoop el;
     std::thread t(&small_rpc::EventLoop::loop, &el);
 
-    while (!is_stop) {
-        ::sleep(FLAGS_wait_ms);
+    LOG_NOTICE << "register signal manager.";
+    small_rpc::StatusManager& sm = small_rpc::StatusManager::get_instance();
+    sm.register_signals();
+    while (!sm.is_close()) {
+        sm.wait_for_signal();
     }
-    LOG_DEBUG << "stop test_eventloop";
+    LOG_NOTICE << "stop test_eventloop";
 
     el.stop();
     t.join();
+    LOG_DEBUG << "end main";
 
     return 0;
 }
