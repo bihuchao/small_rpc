@@ -7,6 +7,16 @@
 
 namespace small_rpc {
 
+// ~Server
+Server::~Server() {
+    for (auto& protocol : _protocols) {
+        delete protocol;
+    }
+    for (auto& p : _services) {
+        delete p.second.first;
+    }
+}
+
 // add_protocol
 bool Server::add_protocol(Protocol* proto) {
     std::map<std::string, Protocol*>::iterator iter = _name2protocols.find(proto->name());
@@ -36,6 +46,29 @@ bool Server::add_service(::google::protobuf::Service* service) {
         methods[md->name()] = md;
     }
 
+    return true;
+}
+
+// 另起线程开始run
+bool Server::start() {
+    if (_thread_num > 0) {
+        // 启动 sub_reactor 线程池，线程数为 _thread_num
+        // TODO
+        LOG_WARNING << "not support multi-thread mode now.";
+        return false;
+    }
+    // 启动 main_reactor 线程
+    _main_reactor_thread = std::thread(&EventLoop::loop, &_el);
+    return true;
+}
+
+bool Server::stop() {
+    // TODO
+    // 停止 sub_reactor线程池
+    _el.stop();
+    if (_main_reactor_thread.joinable()) {
+        _main_reactor_thread.join();
+    }
     return true;
 }
 

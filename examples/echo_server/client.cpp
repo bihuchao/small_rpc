@@ -11,6 +11,8 @@
 
 int main(int argc, char** argv) {
     small_rpc::PbClient client("127.0.0.1", 8878);
+    // TODO 指定client协议
+    // small_rpc::SimpleProtocol* sm  = new small_rpc::SimpleProtocol;
     small_rpc::PbController cntl;
     example::EchoService_Stub stub(&client);
     example::EchoRequest req;

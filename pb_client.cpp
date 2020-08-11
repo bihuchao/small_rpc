@@ -13,12 +13,12 @@
 #include <buffer.h>
 #include <protocols/simple.h>
 
-
 namespace small_rpc {
 
 // PbClient
 // TODO 支持长连接
 // TODO 支持多协议
+// PbClient
 PbClient::PbClient(const char* addr, unsigned short port) : _fd(-1) {
     _fd = socket(AF_INET, SOCK_STREAM, 0);
     if (_fd == -1) {
@@ -31,8 +31,22 @@ PbClient::PbClient(const char* addr, unsigned short port) : _fd(-1) {
     }
 }
 
+// ~PbClient
+PbClient::~PbClient() {
+    if (_fd != -1) {
+        ::close(_fd);
+        _fd == -1;
+    }
+}
+
+// handle_events
+void PbClient::handle_events(int events) {
+    ;
+}
+
+// CallMethod
 void PbClient::CallMethod(const ::google::protobuf::MethodDescriptor* method,
-        ::google::protobuf::RpcController* controller, const ::google::protobuf::Message* request,
+        ::google::protobuf::RpcController* cntl, const ::google::protobuf::Message* request,
         ::google::protobuf::Message* response, ::google::protobuf::Closure* done) {
 
     SimpleProtocol sp;

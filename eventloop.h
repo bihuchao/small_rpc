@@ -13,11 +13,25 @@
 
 namespace small_rpc {
 
+// WakeUper
+class WakeUper : public Channel {
+public:
+    WakeUper(EventLoop* el);
+    ~WakeUper();
+    void setup();
+    void wakeup();
+    void handle_events(int events);
+};
+
+// EventLoop
 class EventLoop {
 public:
     EventLoop();
-    void update_channel(Channel* channel);
+    ~EventLoop();
     void loop();
+    void stop();
+    void wakeup();
+    void update_channel(Channel* channel);
 
 private:
     void _epoll_ctl(int op, Channel* channel);
@@ -27,17 +41,13 @@ public:
 
 private:
     int _epfd;
-    int _eventfd;
-
-    std::atomic<pid_t> _tid;
+    std::vector<struct epoll_event> _events;
     std::atomic<bool> _is_stop;
+    WakeUper _wakeuper;
 
     // for async 调用
-    std::queue<Channel*> _que;
+    std::queue<Channel*> _que; // 这个数据结构再考虑下
     std::mutex _queue_mtx;
-
-    std::vector<struct epoll_event> _events;
-
     // TODO 实现读写 连接超时
 };
 

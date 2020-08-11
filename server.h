@@ -10,7 +10,8 @@
 #include "eventloop.h"
 #include "tcpconnection.h"
 #include "acceptor.h"
-#include <signal.h>
+#include <atomic>
+#include <thread>
 
 namespace small_rpc {
 
@@ -41,20 +42,24 @@ public:
         _acceptor.set_new_connection_callback(
             std::bind(&Server::new_connection_callback, this, std::placeholders::_1));
     }
+    ~Server();
 
     EventLoop& el() { return _el; }
 
-    void set_thread_num(size_t thread_num) { _thread_num = thread_num; }
+    size_t thread_num() const { return _thread_num; }
 
-    bool start() {
-        // 在本线程中启动server
-        if (_thread_num == 0) {
-            // if (!_register_sigint()) { return false; }
-            _el.loop();
+    void set_thread_num(const size_t& thread_num) {
+        _thread_num = thread_num;
+        if (_thread_num > MaxThreadNum) {
+            _thread_num = MaxThreadNum;
         }
-        return true;
     }
 
+    bool start();
+
+    bool stop();
+
+    // 只能在start之前使用
     bool add_protocol(Protocol* proto);
 
     bool add_service(::google::protobuf::Service* service);
@@ -69,13 +74,14 @@ public:
 
     void write_complete_callback(TCPConnection* conn);
 
+public:
+    static const size_t MaxThreadNum = 144;
+
 private:
     // find service and method
     bool _find_service_method(const std::string& service_name,
             const std::string& method_name, ::google::protobuf::Service*& service,
             const ::google::protobuf::MethodDescriptor*& method);
-
-    // TODO register_sigint
 
 private:
     std::vector<Protocol*> _protocols;
@@ -84,6 +90,7 @@ private:
     EventLoop _el;
     Acceptor _acceptor;
     size_t _thread_num;
+    std::thread _main_reactor_thread;
 };
 
 }; // namespace small_rpc
