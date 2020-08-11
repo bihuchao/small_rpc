@@ -6,6 +6,7 @@
 #include "echo.pb.h"
 #include "protocols/simple.h"
 #include "logging.h"
+#include "status_manager.h"
 
 namespace example {
 
@@ -26,13 +27,6 @@ public:
 
 }; // namespace example
 
-bool is_stop = false;
-
-void deal_sig_int(int signo) {
-    LOG_NOTICE << "in deal_sig_int: " << signo;
-    is_stop = true;
-}
-
 int main(int argc, char** argv) {
     LOG_DEBUG << "in main";
     small_rpc::Server server("0.0.0.0", 8878);
@@ -40,18 +34,14 @@ int main(int argc, char** argv) {
     assert(server.add_service(new example::EchoServiceImpl()));
     server.start();
 
-    struct sigaction sa;
-    sa.sa_flags = 0;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_handler = deal_sig_int;
-    int err = sigaction(SIGINT, &sa, nullptr);
-    PLOG_FATAL_IF(err == -1) << "failed to invoke sigaction";
-
-    while (!is_stop) {
-        ::sleep(5);
+    LOG_NOTICE << "register signal manager.";
+    small_rpc::StatusManager& sm = small_rpc::StatusManager::get_instance();
+    sm.register_signals();
+    while (!sm.is_close()) {
+        sm.wait_for_signal();
     }
+    LOG_NOTICE << "stop server";
 
-    LOG_DEBUG << "stop server";
     server.stop();
     LOG_DEBUG << "end main";
 
