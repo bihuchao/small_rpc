@@ -3,7 +3,7 @@
 // Author: Huchao Bi (bihuchao at qq dot com)
 
 #include "socket.h"
-#include "logging.h"
+#include "base/logging.h"
 
 namespace small_rpc {
 

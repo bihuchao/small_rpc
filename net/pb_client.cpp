@@ -3,7 +3,7 @@
 // Author: Huchao Bi (bihuchao at qq dot com)
 
 #include "pb_client.h"
-#include "logging.h"
+#include "base/logging.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include "socket.h"

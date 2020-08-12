@@ -2,14 +2,12 @@
 //
 // Author: Huchao Bi (bihuchao at qq dot com)
 
-#include "logging.h"
+#include <thread>
 #include <gflags/gflags.h>
 #include <gtest/gtest.h>
-#include <atomic>
-#include <vector>
+#include "base/status_manager.h"
+#include "base/logging.h"
 #include "eventloop.h"
-#include <thread>
-#include "status_manager.h"
 
 int main(int argc, char** argv) {
     google::ParseCommandLineFlags(&argc, &argv, false);

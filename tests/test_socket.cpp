@@ -2,11 +2,11 @@
 //
 // Author: Huchao Bi (bihuchao at qq dot com)
 
-#include "timestamp.h"
 #include <iostream>
-#include "logging.h"
 #include <gflags/gflags.h>
 #include <gtest/gtest.h>
+#include "base/logging.h"
+#include "base/timestamp.h"
 #include "socket.h"
 
 int main(int argc, char** argv) {

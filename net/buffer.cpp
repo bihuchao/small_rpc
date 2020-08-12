@@ -3,7 +3,7 @@
 // Author: Huchao Bi (bihuchao at qq dot com)
 
 #include "buffer.h"
-#include "logging.h"
+#include "base/logging.h"
 #include <unistd.h>
 
 namespace small_rpc {

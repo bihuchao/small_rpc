@@ -2,13 +2,12 @@
 //
 // Author: Huchao Bi (bihuchao at qq dot com)
 
-#include "logging.h"
 #include <stdlib.h> // rand
-
 #include <thread>
 #include <vector>
 #include <gflags/gflags.h>
 #include <gtest/gtest.h>
+#include "base/logging.h"
 
 DEFINE_int32(thread_num, 2, "thread num");
 DEFINE_int32(log_count, 5, "log count num");

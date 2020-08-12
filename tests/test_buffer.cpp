@@ -2,11 +2,11 @@
 //
 // Author: Huchao Bi (bihuchao at qq dot com)
 
-#include "timestamp.h"
 #include <iostream>
-#include "logging.h"
 #include <gflags/gflags.h>
 #include <gtest/gtest.h>
+#include "base/logging.h"
+#include "base/timestamp.h"
 #include "buffer.h"
 
 DEFINE_uint64(empty_size, 97, "empty size");

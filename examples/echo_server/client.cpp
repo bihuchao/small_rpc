@@ -3,11 +3,11 @@
 // Author: Huchao Bi (bihuchao at qq dot com)
 
 // TODO
+#include "base/logging.h"
+#include "protocols/simple.h"
 #include "pb_client.h"
 #include "pb_controller.h"
 #include "echo.pb.h"
-#include "protocols/simple.h"
-#include "logging.h"
 
 int main(int argc, char** argv) {
     small_rpc::PbClient client("127.0.0.1", 8878);

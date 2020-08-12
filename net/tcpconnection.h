@@ -6,7 +6,7 @@
 
 #include "channel.h"
 #include "buffer.h"
-#include "protocol.h"
+#include "protocols/protocol.h"
 #include "callbacks.h"
 #include "protocol.pb.h"
 

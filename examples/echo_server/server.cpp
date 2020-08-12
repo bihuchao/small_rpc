@@ -2,11 +2,11 @@
 //
 // Author: Huchao Bi (bihuchao at qq dot com)
 
+#include "protocols/simple.h"
+#include "base/logging.h"
+#include "base/status_manager.h"
 #include "pb_server.h"
 #include "echo.pb.h"
-#include "protocols/simple.h"
-#include "logging.h"
-#include "status_manager.h"
 
 namespace example {
 

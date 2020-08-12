@@ -27,7 +27,7 @@ target_link_libraries(proto
 
 # small_rpc lib
 message(STATUS "------------- lib -------------")
-file(GLOB lib_srcs *.cpp *.h protocols/*.cpp protocols/*.h)
+file(GLOB lib_srcs base/*.cpp base/*.h protocols/*.cpp protocols/*.h net/*.cpp net/*.h)
 message(STATUS "Library " "small_rpc")
 add_library(small_rpc ${lib_srcs})
 target_link_libraries(small_rpc
@@ -35,6 +35,7 @@ target_link_libraries(small_rpc
 )
 target_include_directories(small_rpc
     PUBLIC ${CMAKE_SOURCE_DIR}
+    PUBLIC ${CMAKE_SOURCE_DIR}/net
 )
 
 # unittests

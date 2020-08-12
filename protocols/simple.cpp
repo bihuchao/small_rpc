@@ -4,7 +4,7 @@
 
 #include "simple.h"
 #include "string.h"
-#include "logging.h"
+#include "base/logging.h"
 #include "tcpconnection.h"
 
 namespace small_rpc {

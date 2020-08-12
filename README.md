@@ -1,5 +1,5 @@
 # small_rpc
-一个基于[Protobuf](https://developers.google.com/protocol-buffers)和[reactor模式](https://www.dre.vanderbilt.edu/~schmidt/PDF/reactor-siemens.pdf)的多线程的C++网络编程框架。
+一个基于[Protobuf](https://developers.google.com/protocol-buffers)和[reactor模式](https://www.dre.vanderbilt.edu/~schmidt/PDF/reactor-siemens.pdf)的C++多线程网络编程框架。
 
 ### Features
 * 采用流式日志，用户仅需实现 std::ostream& (std::ostream& os, const T& t); 即可轻松打印自定义类型。
@@ -49,19 +49,23 @@ public:
 ```
 3. 编写server逻辑
 ``` C++
-small_rpc::PbServer pb_server("0.0.0.0", 8878);
-assert(pb_server.add_protocol(new small_rpc::SimpleProtocol()));
-assert(pb_server.add_service(new example::EchoServiceImpl()));
-pb_server.start();
-// ... 等待signal
-pb_server.stop();
+int main(int argc, char** argv) {
+    // ... init gflags
+    small_rpc::PbServer pb_server("0.0.0.0", 8878);
+    assert(pb_server.add_protocol(new small_rpc::SimpleProtocol()));
+    assert(pb_server.add_service(new example::EchoServiceImpl()));
+    pb_server.start();
+    // ... 等待signal
+    pb_server.stop();
+    return 0;
+}
 ```
 
-### Build And Run Echo
+### Build And Run
 ```
 mkdir build && cd build
 cmake .. -DProtobuf_DIR={your_protobuf_path}
 make -j
-./examples/echo_server/echo_server >1 2>&1 &
+./examples/echo_server/echo_server >console.txt 2>&1 &
 ./examples/echo_server/echo_client
 ```

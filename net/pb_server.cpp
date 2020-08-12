@@ -3,7 +3,7 @@
 // Author: Huchao Bi (bihuchao at qq dot com)
 
 #include "pb_server.h"
-#include "logging.h"
+#include "base/logging.h"
 
 namespace small_rpc {
 

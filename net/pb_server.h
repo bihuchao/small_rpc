@@ -6,13 +6,9 @@
 
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/service.h>
-#include "protocol.h"
-#include "eventloop.h"
+#include "protocols/protocol.h"
 #include "tcpconnection.h"
-#include "acceptor.h"
-#include <atomic>
-#include <thread>
-#include <tcpserver.h>
+#include "tcpserver.h"
 
 namespace small_rpc {
 

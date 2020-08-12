@@ -3,7 +3,7 @@
 // Author: Huchao Bi (bihuchao at qq dot com)
 
 #include "tcpconnection.h"
-#include "logging.h"
+#include "base/logging.h"
 #include "eventloop.h"
 #include "socket.h"
 
