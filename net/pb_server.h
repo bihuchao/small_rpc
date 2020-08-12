@@ -46,7 +46,7 @@ public:
 
     bool add_service(::google::protobuf::Service* service);
 
-    void new_connection_callback(TCPConnection* conn);
+    void new_connection_callback(int conn);
 
     void data_read_callback(TCPConnection* conn);
 

@@ -13,6 +13,7 @@ namespace small_rpc {
 // Context
 class Context {
 public:
+    Context() : _conn_type(ConnType_Short) {}
     virtual ~Context() {}
     virtual std::ostream& print(std::ostream& os) const = 0;
 
@@ -57,6 +58,7 @@ inline std::ostream& operator<<(std::ostream& os, const Context& ctx) {
 }
 
 // Protocol
+// TODO 协议类优化 考虑单例
 class Protocol {
 public:
     // server

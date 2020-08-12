@@ -40,9 +40,8 @@ void Acceptor::handler_new_connection() {
             PLOG_FATAL << "failed to invoke accept";
         }
     }
-    TCPConnection* http_conn = new TCPConnection(conn, _el);
     if (_new_connection_callback) {
-        _new_connection_callback(http_conn);
+        _new_connection_callback(conn);
     }
 }
 

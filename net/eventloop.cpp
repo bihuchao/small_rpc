@@ -83,6 +83,7 @@ void EventLoop::loop() {
                 PLOG_FATAL << "failed to invoke ::epoll_wait";
             }
         }
+        // 最大1024个描述符，暂不考虑扩容
         for (int i = 0; i < err; ++i) {
             static_cast<Channel*>(_events[i].data.ptr)->handle_events(_events[i].events);
         }

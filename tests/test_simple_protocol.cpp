@@ -33,7 +33,7 @@ TEST(SimpleProtocol, test_parse_protocol) {
     EXPECT_TRUE(req_ctx == nullptr);
 
     buf.append(sp.MAGIC_NUM - 1);
-    EXPECT_EQ(sp.parse_request(buf, &req_ctx), small_rpc::ParseProtocol_Error);
+    EXPECT_EQ(sp.parse_request(buf, &req_ctx), small_rpc::ParseProtocol_TryAnotherProtocol);
     buf.retrieve(sizeof(sp.MAGIC_NUM));
     EXPECT_TRUE(req_ctx == nullptr);
 

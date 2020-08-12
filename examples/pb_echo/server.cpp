@@ -2,10 +2,11 @@
 //
 // Author: Huchao Bi (bihuchao at qq dot com)
 
-#include "protocols/simple.h"
 #include "base/logging.h"
 #include "base/done_guard.h"
 #include "base/status_manager.h"
+#include "protocols/simple.h"
+#include "protocols/http.h"
 #include "net/pb_server.h"
 #include "echo.pb.h"
 
@@ -32,7 +33,9 @@ public:
 int main(int argc, char** argv) {
     LOG_DEBUG << "in main";
     small_rpc::PbServer pb_server("0.0.0.0", 8878);
+    // 支持单端口多协议
     assert(pb_server.add_protocol(new small_rpc::SimpleProtocol()));
+    assert(pb_server.add_protocol(new small_rpc::HTTPProtocol()));
     assert(pb_server.add_service(new example::EchoServiceImpl()));
     pb_server.start();
 

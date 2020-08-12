@@ -27,6 +27,7 @@ enum ParseProtocolStatus {
     ParseProtocol_Error              = 1;
     ParseProtocol_NoEnoughData       = 2;
     ParseProtocol_TryAnotherProtocol = 3;
+    ParseProtocol_PartSuccess        = 4; // mid state for http protocol
 };
 
 // this message is just use for namespace

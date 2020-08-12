@@ -9,15 +9,21 @@
 
 namespace small_rpc {
 
+class Protocol;
+
 // PbClient
 class PbClient : public Channel, public ::google::protobuf::RpcChannel {
 public:
-
     // PbClient
     PbClient(const char* addr, unsigned short port);
 
     // ~PbClient
-    virtual ~PbClient() {}
+    virtual ~PbClient() {
+        set_protocol(nullptr);
+    }
+
+    // set_protocol
+    bool set_protocol(Protocol* protocol);
 
     // handle_events
     void handle_events(int events);
@@ -29,6 +35,7 @@ public:
 
 private:
     int _fd;
+    Protocol* _protocol;
 };
 
 }; // namespace small_rpc

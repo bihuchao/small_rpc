@@ -75,13 +75,15 @@ bool PbServer::_find_service_method(const std::string& service_name,
 }
 
 // new_connection_callback
-void PbServer::new_connection_callback(TCPConnection* conn) {
+void PbServer::new_connection_callback(int conn) {
+    // TODO 分发 Eventloop
+    TCPConnection* http_conn = new TCPConnection(conn, &_el);
     LOG_DEBUG << "in server new_connection_callback";
-    conn->set_data_read_callback(
+    http_conn->set_data_read_callback(
         std::bind(&PbServer::data_read_callback, this, std::placeholders::_1));
-    conn->set_close_callback(
+    http_conn->set_close_callback(
         std::bind(&PbServer::close_callback, this, std::placeholders::_1));
-    conn->set_write_complete_callback(
+    http_conn->set_write_complete_callback(
         std::bind(&PbServer::write_complete_callback, this, std::placeholders::_1));
 }
 
@@ -90,22 +92,22 @@ void PbServer::data_read_callback(TCPConnection* conn) {
     LOG_DEBUG << "in server data_read_callback";
 
     ParseProtocolStatus res;
-    while (conn->_protocol < _protocols.size()) {
-        res = _protocols[conn->_protocol]->parse_request(conn->_rbuf, conn->mutable_context());
+    while (conn->proto_idx < _protocols.size()) {
+        res = _protocols[conn->proto_idx]->parse_request(conn->rbuf(), conn->mutable_context());
         // TODO 这里面改成 protocol parse_request + context parse_request
         if (res == ParseProtocol_TryAnotherProtocol) {
-            ++conn->_protocol;
+            ++conn->proto_idx;
         } else {
             break;
         }
     }
-    if (conn->_protocol >= _protocols.size()) {
+    if (conn->proto_idx >= _protocols.size()) {
         LOG_WARNING << "can't parse with all protocol";
         conn->close();
         return ;
     }
     if (res == ParseProtocol_Error) {
-        LOG_WARNING << "can't parse with protocol " << _protocols[conn->_protocol]->name();
+        LOG_WARNING << "can't parse with protocol " << _protocols[conn->proto_idx]->name();
         conn->close();
         return ;
     }
@@ -182,10 +184,10 @@ void PbServer::response_callback(ReqRespConnPack* pack) {
     TCPConnection* conn = pack->_conn;
     delete pack;
 
-    conn->_ctx->set_rpc_status(RpcStatus_OK);
-    *conn->_ctx->mutable_payload() = std::move(resp_str);
+    (*conn->mutable_context())->set_rpc_status(RpcStatus_OK);
+    *(*conn->mutable_context())->mutable_payload() = std::move(resp_str);
     // TODO 判读 ctx指针有效性
-    bool ret = conn->context()->pack_response(conn->_wbuf);
+    bool ret = conn->context()->pack_response(conn->wbuf());
     // TODO judge ret
 
     conn->set_event(EPOLLOUT);

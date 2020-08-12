@@ -193,7 +193,7 @@ ParseProtocolStatus SimpleProtocol::parse_request(Buffer& rd_buf, Context** ctxx
     if (!ctxx) { return ParseProtocol_Error; }
     if (*ctxx == nullptr) {
         if (rd_buf.readable() < sizeof(MAGIC_NUM)) { return ParseProtocol_NoEnoughData; }
-        if (rd_buf.peek_int32() != MAGIC_NUM) { return ParseProtocol_Error; }
+        if (rd_buf.peek_int32() != MAGIC_NUM) { return ParseProtocol_TryAnotherProtocol; }
         *ctxx = new SimpleContext();
     }
     SimpleContext* ctx = dynamic_cast<SimpleContext*>(*ctxx);

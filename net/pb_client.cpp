@@ -9,7 +9,7 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/service.h>
 #include "base/logging.h"
-#include "protocols/simple.h"
+#include "protocols/protocol.h"
 #include "net/socket.h"
 #include "net/buffer.h"
 
@@ -18,7 +18,7 @@ namespace small_rpc {
 // PbClient
 // TODO 支持长连接
 // TODO 支持多协议
-PbClient::PbClient(const char* addr, unsigned short port) : _fd(-1) {
+PbClient::PbClient(const char* addr, unsigned short port) : _fd(-1), _protocol(nullptr) {
     _fd = socket(AF_INET, SOCK_STREAM, 0);
     if (_fd == -1) {
         PLOG_FATAL << "failed to invoke socket";
@@ -28,6 +28,16 @@ PbClient::PbClient(const char* addr, unsigned short port) : _fd(-1) {
     if (err == -1) {
         PLOG_FATAL << "failed to invoke connect";
     }
+}
+
+// set_protocol
+bool PbClient::set_protocol(Protocol* protocol) {
+    if (_protocol) {
+        delete _protocol;
+        _protocol = nullptr;
+    }
+    _protocol = protocol;
+    return true;
 }
 
 // handle_events
@@ -40,8 +50,7 @@ void PbClient::CallMethod(const ::google::protobuf::MethodDescriptor* method,
         ::google::protobuf::RpcController* cntl, const ::google::protobuf::Message* request,
         ::google::protobuf::Message* response, ::google::protobuf::Closure* done) {
 
-    SimpleProtocol sp;
-    Context* ctx = sp.new_context();
+    Context* ctx = _protocol->new_context();
     ctx->set_conn_type(ConnType_Short);
     ctx->set_method(method->name());
     ctx->set_service(method->service()->name());

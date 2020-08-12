@@ -12,7 +12,7 @@ class TCPConnection;
 
 // Acceptor
 // 有新连接进来
-using NewConnectionCallback = std::function<void (TCPConnection*)>;
+using NewConnectionCallback = std::function<void (int)>;
 
 // TCPConnection
 // rd_buf 有数据进来

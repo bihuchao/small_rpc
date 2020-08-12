@@ -40,11 +40,16 @@ public:
     Context** mutable_context() { return &_ctx; }
     void set_context(Context* ctx) { _ctx = ctx; }
 
+    Buffer& rbuf() { return _rbuf; }
+    Buffer& wbuf() { return _wbuf; }
+
 public:
     static const size_t InitialBufferSize = 10240;
 
+public:
+    size_t proto_idx;
+
 private:
-    size_t _protocol;
     Context* _ctx;
 
     // TODO 判断是否为空
@@ -54,9 +59,6 @@ private:
     ConnectionCloseCallback _close_callback;
 
     Buffer _rbuf, _wbuf;
-
-// TODO move friend class
-friend class PbServer;
 };
 
 }; // namespace small_rpc
