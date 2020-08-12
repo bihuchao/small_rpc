@@ -2,11 +2,11 @@
 一个基于[Protobuf](https://developers.google.com/protocol-buffers)和[reactor模式](https://www.dre.vanderbilt.edu/~schmidt/PDF/reactor-siemens.pdf)的C++多线程网络编程框架。
 
 ### Features
-* 采用流式日志，用户仅需实现 std::ostream& (std::ostream& os, const T& t); 即可轻松打印自定义类型。
-* 支持在不同层级进行编程: 1) 通过Protobuf定义接口文件，借助Protobuf生成的server_stub / client_stub框架代码进行编程; 2) 也通过TCPConnection回调函数直接读写Buffer。
-* 基于Protobuf接口编程模式支持多种协议: 内置simple_protocol / HTTP协议，server同时支持单端口多协议。
-* 协议层支持与框架代码解耦: 通过继承Context和Protocol即可实现自定义协议，协议实现见`protocols`。
-* 基于Linux epoll多路复用API。
+* 采用**流式日志**，用户仅需实现`std::ostream& (std::ostream& os, const T& t);`即可轻松打印自定义类型。
+* 支持在不同层级进行编程: 1) 通过Protobuf定义接口文件，借助Protobuf生成的server_stub / client_stub框架代码进行编程; 2) 也通过`TCPConnection`回调函数直接读写`Buffer`。
+* 基于Protobuf接口编程模式支持多种协议: 内置`simple_protocol`、`HTTP`协议，server同时支持**单端口多协议**。
+* 协议层支持与框架代码解耦: 通过继承`Context`和`Protocol`即可实现自定义协议，协议实现见`protocols`。
+* 基于Linux下`epoll`多路复用API。
 * 采用gflags配置，便于测试与上线。
 * 采用gtest进行单元测试，方便开发。
 
