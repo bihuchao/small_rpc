@@ -9,7 +9,7 @@
 #include "base/timestamp.h"
 #include "net/buffer.h"
 
-DEFINE_uint64(empty_size, 97, "empty size");
+DEFINE_uint64(empty_size, 100, "empty size");
 
 int main(int argc, char** argv) {
     google::ParseCommandLineFlags(&argc, &argv, false);
@@ -22,7 +22,6 @@ int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
-
 
 TEST(Buffer, test_read_buffer) {
     // ctor

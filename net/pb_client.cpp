@@ -18,7 +18,6 @@ namespace small_rpc {
 // PbClient
 // TODO 支持长连接
 // TODO 支持多协议
-// PbClient
 PbClient::PbClient(const char* addr, unsigned short port) : _fd(-1) {
     _fd = socket(AF_INET, SOCK_STREAM, 0);
     if (_fd == -1) {

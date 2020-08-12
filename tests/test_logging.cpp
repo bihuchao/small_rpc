@@ -12,7 +12,7 @@
 DEFINE_int32(thread_num, 2, "thread num");
 DEFINE_int32(log_count, 5, "log count num");
 
-void func(int thread_no) {
+void log_func(int thread_no) {
     for (int i = 0; i < FLAGS_log_count; ++i) {
         LOG_NOTICE << "in sub thread" << thread_no;
     }
@@ -56,7 +56,7 @@ TEST(logging, test_severity) {
 TEST(logging, test_multithread) {
     std::vector<std::thread> ts;
     for (int i = 0; i < FLAGS_thread_num; ++i) {
-        ts.emplace_back(func, i);
+        ts.emplace_back(log_func, i);
     }
     for (auto& t : ts) {
         t.join();

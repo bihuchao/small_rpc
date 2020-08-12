@@ -10,6 +10,7 @@
 
 namespace example {
 
+// EchoServiceImpl
 class EchoServiceImpl : public example::EchoService {
 public:
     void echo(::google::protobuf::RpcController* controller,

@@ -11,6 +11,7 @@
 
 namespace small_rpc {
 
+// TimeStamp
 class TimeStamp {
 public:
     TimeStamp(long sec, long msec) : _sec(sec), _msec(msec) {}

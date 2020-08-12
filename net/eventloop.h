@@ -18,6 +18,7 @@ class WakeUper : public Channel {
 public:
     WakeUper(EventLoop* el);
     ~WakeUper() {}
+
     void setup();
     void wakeup();
     void handle_events(int events);
@@ -28,6 +29,7 @@ class EventLoop {
 public:
     EventLoop();
     ~EventLoop();
+
     void loop();
     void stop();
     void wakeup();

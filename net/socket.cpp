@@ -14,6 +14,7 @@ std::ostream& operator<<(std::ostream& os, struct sockaddr_in addr) {
     return os;
 }
 
+// get_addr
 struct sockaddr_in get_addr(const char* addr, unsigned short port) {
     // get addr
     struct sockaddr_in server_addr;
@@ -24,12 +25,14 @@ struct sockaddr_in get_addr(const char* addr, unsigned short port) {
     return server_addr;
 }
 
+// set_nonblocking
 void set_nonblocking(int fd) {
     int flags = fcntl(fd, F_GETFL);
     int err = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
     PLOG_FATAL_IF(err == -1) << "failed to invoke fcntl";
 }
 
+// listen_socket
 int listen_socket(const char* addr, unsigned short port, int backlog) {
     // get socket and set nonblock
     int listen_fd = socket(AF_INET, SOCK_STREAM, 0);

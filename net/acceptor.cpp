@@ -10,6 +10,7 @@
 
 namespace small_rpc {
 
+// Acceptor
 Acceptor::Acceptor(EventLoop* el, const char* addr, unsigned short port) {
     _fd = listen_socket(addr, port);
     _event = EPOLLIN;
@@ -17,6 +18,7 @@ Acceptor::Acceptor(EventLoop* el, const char* addr, unsigned short port) {
     _el->update_channel(static_cast<Channel*>(this));
 }
 
+// handle_events
 void Acceptor::handle_events(int events) {
     LOG_DEBUG << "acceptor handle events";
     if (events & EPOLLIN) {
@@ -24,6 +26,7 @@ void Acceptor::handle_events(int events) {
     }
 }
 
+// handler_new_connection
 void Acceptor::handler_new_connection() {
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);

@@ -10,6 +10,7 @@ namespace small_rpc {
 
 class EventLoop;
 
+// Channel
 class Channel {
 public:
     Channel(int fd = -1, EventLoop* el = nullptr)

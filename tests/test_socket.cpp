@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
 
 namespace small_rpc {
 
-TEST(ClientInfo, test_print) {
+TEST(socket, get_addr) {
     auto addr = get_addr("127.0.0.0", 8878);
     LOG_NOTICE << "first addr: " << addr;
 

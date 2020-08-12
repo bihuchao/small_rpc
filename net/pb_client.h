@@ -29,7 +29,6 @@ public:
 
 private:
     int _fd;
-
 };
 
 }; // namespace small_rpc
