@@ -92,6 +92,7 @@ void PbServer::data_read_callback(TCPConnection* conn) {
     ParseProtocolStatus res;
     while (conn->_protocol < _protocols.size()) {
         res = _protocols[conn->_protocol]->parse_request(conn->_rbuf, conn->mutable_context());
+        // TODO 这里面改成 protocol parse_request + context parse_request
         if (res == ParseProtocol_TryAnotherProtocol) {
             ++conn->_protocol;
         } else {
@@ -183,7 +184,8 @@ void PbServer::response_callback(ReqRespConnPack* pack) {
 
     conn->_ctx->set_rpc_status(RpcStatus_OK);
     *conn->_ctx->mutable_payload() = std::move(resp_str);
-    bool ret = _protocols[conn->_protocol]->pack_response(conn->_wbuf, conn->context());
+    // TODO 判读 ctx指针有效性
+    bool ret = conn->context()->pack_response(conn->_wbuf);
     // TODO judge ret
 
     conn->set_event(EPOLLOUT);

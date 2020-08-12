@@ -15,9 +15,14 @@ public:
     SimpleContext() : _stage(0) {}
     std::ostream& print(std::ostream& os) const;
 
+    // parse and pack request / response
+    // parse_request rd_buf => ctx
     ParseProtocolStatus parse_request(Buffer& rd_buf);
+    // pack_response ctx => wr_buf
     bool pack_response(Buffer& wr_buf) const;
+    // pack_request ctx => wr_buf
     bool pack_request(Buffer& wr_buf) const;
+    // parse_response rd_buf => ctx
     ParseProtocolStatus parse_response(Buffer& rd_buf);
 private:
     int _stage;
@@ -32,15 +37,9 @@ public:
     // server
     // parse_request rd_buf => ctx
     ParseProtocolStatus parse_request(Buffer& rd_buf, Context** ctx);
-    // pack_response ctx => wr_buf
-    bool pack_response(Buffer& wr_buf, const Context* ctx);
 
     // client
     Context* new_context() { return new SimpleContext(); }
-    // pack_request ctx => wr_buf
-    bool pack_request(Buffer& wr_buf, const Context* ctx);
-    // parse_response rd_buf => ctx
-    ParseProtocolStatus parse_response(Buffer& rd_buf, Context* ctx);
 
     const char* name() { return "simple_proto"; };
 public:

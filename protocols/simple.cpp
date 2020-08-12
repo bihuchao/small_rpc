@@ -204,37 +204,4 @@ ParseProtocolStatus SimpleProtocol::parse_request(Buffer& rd_buf, Context** ctxx
     return ctx->parse_request(rd_buf);
 }
 
-// pack_response
-bool SimpleProtocol::pack_response(Buffer& wr_buf, const Context* ctxx) {
-    if (!ctxx) { return false; }
-    const SimpleContext* ctx = dynamic_cast<const SimpleContext*>(ctxx);
-    if (!ctx) {
-        LOG_WARNING << "failed to dynamic_cast SimpleContext.";
-        return ParseProtocol_Error;
-    }
-    return ctx->pack_response(wr_buf);
-}
-
-// pack_request
-bool SimpleProtocol::pack_request(Buffer& wr_buf, const Context* ctxx) {
-    if (!ctxx) { return false; }
-    const SimpleContext* ctx = dynamic_cast<const SimpleContext*>(ctxx);
-    if (!ctx) {
-        LOG_WARNING << "failed to dynamic_cast SimpleContext.";
-        return ParseProtocol_Error;
-    }
-    return ctx->pack_request(wr_buf);
-}
-
-// parse_response
-ParseProtocolStatus SimpleProtocol::parse_response(Buffer& rd_buf, Context* ctxx) {
-    if (!ctxx) { return ParseProtocol_Error; }
-    SimpleContext* ctx = dynamic_cast<SimpleContext*>(ctxx);
-    if (!ctx) {
-        LOG_WARNING << "failed to dynamic_cast SimpleContext.";
-        return ParseProtocol_Error;
-    }
-    return ctx->parse_response(rd_buf);
-}
-
 }; //namespace small_rpc

@@ -53,7 +53,8 @@ void PbClient::CallMethod(const ::google::protobuf::MethodDescriptor* method,
     }
 
     Buffer wr_buf;
-    sp.pack_request(wr_buf, ctx);
+    // TODO 判断ctx指针非空
+    ctx->pack_request(wr_buf);
 
     while (wr_buf.readable() || wr_buf.extraable()) {
         wr_buf.write_fd(_fd);
@@ -62,7 +63,8 @@ void PbClient::CallMethod(const ::google::protobuf::MethodDescriptor* method,
     Buffer rd_buf;
     while (true) {
         rd_buf.read_fd(_fd);
-        ParseProtocolStatus ret = sp.parse_response(rd_buf, ctx);
+        // TODO 判断ctx指针非空
+        ParseProtocolStatus ret = ctx->parse_response(rd_buf);
         if (ret == ParseProtocol_Error) {
             LOG_WARNING << "ParseProtocol_Error";
             return ;

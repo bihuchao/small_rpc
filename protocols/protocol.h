@@ -33,6 +33,17 @@ public:
 
     std::string* mutable_payload() { return &_payload; }
 
+public:
+    // parse and pack request / response
+    // parse_request rd_buf => ctx
+    virtual ParseProtocolStatus parse_request(Buffer& rd_buf) = 0;
+    // pack_response ctx => wr_buf
+    virtual bool pack_response(Buffer& wr_buf) const = 0;
+    // pack_request ctx => wr_buf
+    virtual bool pack_request(Buffer& wr_buf) const = 0;
+    // parse_response rd_buf => ctx
+    virtual ParseProtocolStatus parse_response(Buffer& rd_buf) = 0;
+
 protected:
     ConnType _conn_type;
     RpcStatus _rpc_status;
@@ -51,16 +62,10 @@ public:
     // server
     // parse_request rd_buf => ctx
     virtual ParseProtocolStatus parse_request(Buffer& rd_buf, Context** ctx) = 0;
-    // pack_response ctx => wr_buf
-    virtual bool pack_response(Buffer& wr_buf, const Context* ctx) = 0;
 
     // client
     // get_request_context
     virtual Context* new_context() = 0;
-    // pack_request ctx => wr_buf
-    virtual bool pack_request(Buffer& wr_buf, const Context* ctx) = 0;
-    // parse_response rd_buf => ctx
-    virtual ParseProtocolStatus parse_response(Buffer& rd_buf, Context* ctx) = 0;
 
     virtual ~Protocol() {}
     virtual const char* name() = 0;
