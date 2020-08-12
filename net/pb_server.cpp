@@ -114,7 +114,6 @@ void PbServer::data_read_callback(TCPConnection* conn) {
     LOG_DEBUG << "get parse context: " << *conn->context();
 
     // 这里分包成功了, 开始调用 request_callback
-    conn->set_status(small_rpc::TCPConnection_ReadSuccess);
     request_callback(conn);
 }
 

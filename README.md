@@ -14,16 +14,21 @@
 1. 首先定义proto文件，以proto3作为范例
 ``` protobuf
 syntax = "proto3";
+
 option cc_generic_services = true;
+
 package example;
+
 message EchoRequest {
     uint64 logid   = 1;
     bytes  message = 2;
 };
+
 message EchoResponse {
     uint64 logid  = 1;
     bytes  result = 2;
 };
+
 service EchoService {
     rpc echo(EchoRequest) returns (EchoResponse);
 };
@@ -57,6 +62,7 @@ int main(int argc, char** argv) {
     pb_server.start();
     // ... 等待signal
     pb_server.stop();
+
     return 0;
 }
 ```

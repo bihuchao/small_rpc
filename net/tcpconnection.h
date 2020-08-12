@@ -14,6 +14,7 @@ namespace small_rpc {
 
 class EventLoop;
 
+// TCPConnection
 class TCPConnection : public Channel {
 public:
     TCPConnection(int conn, EventLoop* el);
@@ -35,10 +36,6 @@ public:
 
     void close();
 
-    TCPConnectionStatus status() { return _status; }
-
-    void set_status(const TCPConnectionStatus& status) { _status = status; }
-
     const Context* context() { return _ctx; }
     Context** mutable_context() { return &_ctx; }
     void set_context(Context* ctx) { _ctx = ctx; }
@@ -47,17 +44,16 @@ public:
     static const size_t InitialBufferSize = 10240;
 
 private:
+    size_t _protocol;
+    Context* _ctx;
+
     // TODO 判断是否为空
+    // callbacks
     DataReadCallback _data_read_callback;
     DataWriteCompleteCallback _write_complete_callback;
     ConnectionCloseCallback _close_callback;
 
     Buffer _rbuf, _wbuf;
-
-    TCPConnectionStatus _status;
-
-    size_t _protocol;
-    Context* _ctx;
 
 // TODO move friend class
 friend class PbServer;
