@@ -12,12 +12,12 @@
 #include "acceptor.h"
 #include <atomic>
 #include <thread>
+#include <tcpserver.h>
 
 namespace small_rpc {
 
-// Server
-// TODO 拆分 TCPServer 和 PBRPCServer
-class Server {
+// PbServer
+class PbServer : public TCPServer {
 public:
     // google protobuf not support >2 params callback closure
     // so use ReqRespConnPack to pack many params
@@ -29,7 +29,7 @@ public:
         google::protobuf::Message* _request;
         google::protobuf::Message* _response;
         TCPConnection* _conn;
-    friend class Server;
+    friend class PbServer;
     };
 
 public:
@@ -38,26 +38,12 @@ public:
     using Services = std::map<std::string, Service>;
 
 public:
-    Server(const char* addr, unsigned short port) : _acceptor(&_el, addr, port), _thread_num(0) {
+    PbServer(const char* addr, unsigned short port) : TCPServer(addr, port) {
         _acceptor.set_new_connection_callback(
-            std::bind(&Server::new_connection_callback, this, std::placeholders::_1));
-    }
-    ~Server();
-
-    EventLoop& el() { return _el; }
-
-    size_t thread_num() const { return _thread_num; }
-
-    void set_thread_num(const size_t& thread_num) {
-        _thread_num = thread_num;
-        if (_thread_num > MaxThreadNum) {
-            _thread_num = MaxThreadNum;
-        }
+            std::bind(&PbServer::new_connection_callback, this, std::placeholders::_1));
     }
 
-    bool start();
-
-    bool stop();
+    ~PbServer();
 
     // 只能在start之前使用
     bool add_protocol(Protocol* proto);
@@ -76,9 +62,6 @@ public:
 
     void response_callback(ReqRespConnPack* pack);
 
-public:
-    static const size_t MaxThreadNum = 144;
-
 private:
     // find service and method
     bool _find_service_method(const std::string& service_name,
@@ -89,10 +72,6 @@ private:
     std::vector<Protocol*> _protocols;
     std::map<std::string, Protocol*> _name2protocols;
     Services _services;
-    EventLoop _el;
-    Acceptor _acceptor;
-    size_t _thread_num;
-    std::thread _main_reactor_thread;
 };
 
 }; // namespace small_rpc

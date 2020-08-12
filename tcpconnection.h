@@ -60,7 +60,7 @@ private:
     Context* _ctx;
 
 // TODO move friend class
-friend class Server;
+friend class PbServer;
 };
 
 }; // namespace small_rpc

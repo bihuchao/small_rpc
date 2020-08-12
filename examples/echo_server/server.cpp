@@ -2,7 +2,7 @@
 //
 // Author: Huchao Bi (bihuchao at qq dot com)
 
-#include "server.h"
+#include "pb_server.h"
 #include "echo.pb.h"
 #include "protocols/simple.h"
 #include "logging.h"
@@ -29,10 +29,10 @@ public:
 
 int main(int argc, char** argv) {
     LOG_DEBUG << "in main";
-    small_rpc::Server server("0.0.0.0", 8878);
-    assert(server.add_protocol(new small_rpc::SimpleProtocol()));
-    assert(server.add_service(new example::EchoServiceImpl()));
-    server.start();
+    small_rpc::PbServer pb_server("0.0.0.0", 8878);
+    assert(pb_server.add_protocol(new small_rpc::SimpleProtocol()));
+    assert(pb_server.add_service(new example::EchoServiceImpl()));
+    pb_server.start();
 
     LOG_NOTICE << "register signal manager.";
     small_rpc::StatusManager& sm = small_rpc::StatusManager::get_instance();
@@ -40,9 +40,9 @@ int main(int argc, char** argv) {
     while (!sm.is_close()) {
         sm.wait_for_signal();
     }
-    LOG_NOTICE << "stop server";
+    LOG_NOTICE << "stop pb_server";
 
-    server.stop();
+    pb_server.stop();
     LOG_DEBUG << "end main";
 
     return 0;

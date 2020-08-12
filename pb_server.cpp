@@ -2,13 +2,13 @@
 //
 // Author: Huchao Bi (bihuchao at qq dot com)
 
-#include "server.h"
+#include "pb_server.h"
 #include "logging.h"
 
 namespace small_rpc {
 
-// ~Server
-Server::~Server() {
+// ~PbServer
+PbServer::~PbServer() {
     for (auto& protocol : _protocols) {
         delete protocol;
     }
@@ -18,7 +18,7 @@ Server::~Server() {
 }
 
 // add_protocol
-bool Server::add_protocol(Protocol* proto) {
+bool PbServer::add_protocol(Protocol* proto) {
     std::map<std::string, Protocol*>::iterator iter = _name2protocols.find(proto->name());
     if (iter != _name2protocols.end()) {
         return false;
@@ -29,7 +29,7 @@ bool Server::add_protocol(Protocol* proto) {
 }
 
 // add_service
-bool Server::add_service(::google::protobuf::Service* service) {
+bool PbServer::add_service(::google::protobuf::Service* service) {
     const ::google::protobuf::ServiceDescriptor* sd = service->GetDescriptor();
     auto it = _services.find(sd->name());
     if (it != _services.end()) {
@@ -49,31 +49,8 @@ bool Server::add_service(::google::protobuf::Service* service) {
     return true;
 }
 
-// 另起线程开始run
-bool Server::start() {
-    if (_thread_num > 0) {
-        // 启动 sub_reactor 线程池，线程数为 _thread_num
-        // TODO
-        LOG_WARNING << "not support multi-thread mode now.";
-        return false;
-    }
-    // 启动 main_reactor 线程
-    _main_reactor_thread = std::thread(&EventLoop::loop, &_el);
-    return true;
-}
-
-bool Server::stop() {
-    // TODO
-    // 停止 sub_reactor线程池
-    _el.stop();
-    if (_main_reactor_thread.joinable()) {
-        _main_reactor_thread.join();
-    }
-    return true;
-}
-
 // find service and method
-bool Server::_find_service_method(const std::string& service_name,
+bool PbServer::_find_service_method(const std::string& service_name,
         const std::string& method_name, ::google::protobuf::Service*& service,
         const ::google::protobuf::MethodDescriptor*& method) {
 
@@ -98,18 +75,18 @@ bool Server::_find_service_method(const std::string& service_name,
 }
 
 // new_connection_callback
-void Server::new_connection_callback(TCPConnection* conn) {
+void PbServer::new_connection_callback(TCPConnection* conn) {
     LOG_DEBUG << "in server new_connection_callback";
     conn->set_data_read_callback(
-        std::bind(&Server::data_read_callback, this, std::placeholders::_1));
+        std::bind(&PbServer::data_read_callback, this, std::placeholders::_1));
     conn->set_close_callback(
-        std::bind(&Server::close_callback, this, std::placeholders::_1));
+        std::bind(&PbServer::close_callback, this, std::placeholders::_1));
     conn->set_write_complete_callback(
-        std::bind(&Server::write_complete_callback, this, std::placeholders::_1));
+        std::bind(&PbServer::write_complete_callback, this, std::placeholders::_1));
 }
 
 // data_read_callback
-void Server::data_read_callback(TCPConnection* conn) {
+void PbServer::data_read_callback(TCPConnection* conn) {
     LOG_DEBUG << "in server data_read_callback";
 
     ParseProtocolStatus res;
@@ -142,7 +119,7 @@ void Server::data_read_callback(TCPConnection* conn) {
 }
 
 // write_complete_callback
-void Server::write_complete_callback(TCPConnection* conn) {
+void PbServer::write_complete_callback(TCPConnection* conn) {
     // TODO 判断 短连接 / 长连接
     conn->set_event(0);
     conn->el()->update_channel(static_cast<Channel*>(conn));
@@ -151,7 +128,7 @@ void Server::write_complete_callback(TCPConnection* conn) {
 }
 
 // close_callback
-void Server::close_callback(TCPConnection* conn) {
+void PbServer::close_callback(TCPConnection* conn) {
     // TODO 判断 短连接 / 长连接
     conn->set_event(0);
     conn->el()->update_channel(static_cast<Channel*>(conn));
@@ -161,7 +138,7 @@ void Server::close_callback(TCPConnection* conn) {
 
 // request_callback
 // message分包完毕
-void Server::request_callback(TCPConnection* conn) {
+void PbServer::request_callback(TCPConnection* conn) {
     // 执行 应用层函数
     const std::string& pb_data = conn->context()->payload_view().str();
     const std::string& service_name = conn->context()->service();
@@ -187,14 +164,14 @@ void Server::request_callback(TCPConnection* conn) {
     ReqRespConnPack* pack = new ReqRespConnPack(request, response, conn);
 
     ::google::protobuf::Closure* done = ::google::protobuf::NewCallback(this,
-        &small_rpc::Server::response_callback, pack);
+        &small_rpc::PbServer::response_callback, pack);
 
     // call method
     service->CallMethod(method, nullptr, request, response, done);
 }
 
 // response_callback
-void Server::response_callback(ReqRespConnPack* pack) {
+void PbServer::response_callback(ReqRespConnPack* pack) {
     LOG_DEBUG << "in response_callback";
 
     // TODO 智能指针
