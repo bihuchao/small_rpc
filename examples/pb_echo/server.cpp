@@ -4,6 +4,7 @@
 
 #include "protocols/simple.h"
 #include "base/logging.h"
+#include "base/done_guard.h"
 #include "base/status_manager.h"
 #include "net/pb_server.h"
 #include "echo.pb.h"
@@ -17,12 +18,12 @@ public:
             const ::example::EchoRequest* request,
             ::example::EchoResponse* response,
             ::google::protobuf::Closure* done) {
+        small_rpc::DoneGuard done_guard(done);
         LOG_NOTICE << "enter EchoServiceImpl echo";
         LOG_DEBUG << "request: " << request->DebugString();
         response->set_logid(request->logid());
         response->set_result(request->message() + " powered by EchoService");
         LOG_NOTICE << "exit EchoServiceImpl echo";
-        done->Run();
     }
 };
 
