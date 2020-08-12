@@ -17,13 +17,6 @@ Acceptor::Acceptor(EventLoop* el, const char* addr, unsigned short port) {
     _el->update_channel(static_cast<Channel*>(this));
 }
 
-Acceptor::~Acceptor() {
-    if (_fd != -1) {
-        ::close(_fd);
-        _fd = -1;
-    }
-}
-
 void Acceptor::handle_events(int events) {
     LOG_DEBUG << "acceptor handle events";
     if (events & EPOLLIN) {

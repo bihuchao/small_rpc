@@ -102,8 +102,8 @@ void Server::new_connection_callback(TCPConnection* conn) {
     LOG_DEBUG << "in server new_connection_callback";
     conn->set_data_read_callback(
         std::bind(&Server::data_read_callback, this, std::placeholders::_1));
-    conn->set_request_callback(
-        std::bind(&Server::request_callback, this, std::placeholders::_1));
+    conn->set_close_callback(
+        std::bind(&Server::close_callback, this, std::placeholders::_1));
     conn->set_write_complete_callback(
         std::bind(&Server::write_complete_callback, this, std::placeholders::_1));
 }
@@ -123,22 +123,44 @@ void Server::data_read_callback(TCPConnection* conn) {
     }
     if (conn->_protocol >= _protocols.size()) {
         LOG_WARNING << "can't parse with all protocol";
-        conn->set_status(small_rpc::TCPConnection_Error);
+        conn->close();
         return ;
     }
     if (res == ParseProtocol_Error) {
-        LOG_WARNING << "can't parse with all protocol";
-        conn->set_status(small_rpc::TCPConnection_Error);
+        LOG_WARNING << "can't parse with protocol " << _protocols[conn->_protocol]->name();
+        conn->close();
         return ;
     }
     if (res == ParseProtocol_NoEnoughData) {
         return ;
     }
     LOG_DEBUG << "get parse context: " << *conn->context();
+
+    // 这里分包成功了, 开始调用 request_callback
     conn->set_status(small_rpc::TCPConnection_ReadSuccess);
+    request_callback(conn);
+}
+
+// write_complete_callback
+void Server::write_complete_callback(TCPConnection* conn) {
+    // TODO 判断 短连接 / 长连接
+    conn->set_event(0);
+    conn->el()->update_channel(static_cast<Channel*>(conn));
+    close(conn->fd());
+    LOG_DEBUG <<"finish to write";
+}
+
+// close_callback
+void Server::close_callback(TCPConnection* conn) {
+    // TODO 判断 短连接 / 长连接
+    conn->set_event(0);
+    conn->el()->update_channel(static_cast<Channel*>(conn));
+    close(conn->fd());
+    LOG_DEBUG <<"in close_callback";
 }
 
 // request_callback
+// message分包完毕
 void Server::request_callback(TCPConnection* conn) {
     // 执行 应用层函数
     const std::string& pb_data = conn->context()->payload_view().str();
@@ -191,15 +213,6 @@ void Server::response_callback(ReqRespConnPack* pack) {
     conn->set_event(EPOLLOUT);
     // TODO 目前只支持同步调用 异步调用待支持
     conn->el()->update_channel(static_cast<Channel*>(conn));
-}
-
-// write_complete_callback
-void Server::write_complete_callback(TCPConnection* conn) {
-    // TODO 判断 短连接 / 长连接
-    conn->set_event(0);
-    conn->el()->update_channel(static_cast<Channel*>(conn));
-    close(conn->fd());
-    LOG_DEBUG <<"finish to write";
 }
 
 }; // namespace small_rpc

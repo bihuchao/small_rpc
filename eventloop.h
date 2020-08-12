@@ -17,7 +17,7 @@ namespace small_rpc {
 class WakeUper : public Channel {
 public:
     WakeUper(EventLoop* el);
-    ~WakeUper();
+    ~WakeUper() {}
     void setup();
     void wakeup();
     void handle_events(int events);

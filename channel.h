@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <unistd.h>
+
 namespace small_rpc {
 
 class EventLoop;
@@ -12,14 +14,23 @@ class Channel {
 public:
     Channel(int fd = -1, EventLoop* el = nullptr)
         : _fd(fd), _event(0), _sevent(0), _el(el) {}
+
+    virtual ~Channel() {
+        if (_fd != -1) {
+            ::close(_fd);
+            _fd = -1;
+        }
+    }
+
     int fd() const { return _fd; }
     EventLoop* el() const { return _el; }
     int event() const { return _event; }
     int sevent() const { return _sevent; }
     void set_event(int event) { _event = event; }
     void set_sevent(int sevent) { _sevent = sevent; }
+
     virtual void handle_events(int events) = 0;
-    virtual ~Channel() {}
+
 protected:
     int _fd;
     int _event, _sevent;

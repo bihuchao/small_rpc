@@ -68,11 +68,13 @@ public:
 
     void data_read_callback(TCPConnection* conn);
 
+    void write_complete_callback(TCPConnection* conn);
+
+    void close_callback(TCPConnection* conn);
+
     void request_callback(TCPConnection* conn);
 
     void response_callback(ReqRespConnPack* pack);
-
-    void write_complete_callback(TCPConnection* conn);
 
 public:
     static const size_t MaxThreadNum = 144;

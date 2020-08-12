@@ -12,7 +12,7 @@ namespace small_rpc {
 class Acceptor : public Channel {
 public:
     Acceptor(EventLoop* el, const char* addr, unsigned short port);
-    ~Acceptor();
+    ~Acceptor() {}
 
     void handle_events(int events);
 

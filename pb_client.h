@@ -17,7 +17,7 @@ public:
     PbClient(const char* addr, unsigned short port);
 
     // ~PbClient
-    virtual ~PbClient();
+    virtual ~PbClient() {}
 
     // handle_events
     void handle_events(int events);

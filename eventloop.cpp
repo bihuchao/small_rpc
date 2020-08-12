@@ -15,14 +15,6 @@ WakeUper::WakeUper(EventLoop* el) : Channel(-1, el) {
     _event = EPOLLIN;
 }
 
-// ~WakeUper
-WakeUper::~WakeUper() {
-    if (_fd != -1) {
-        ::close(_fd);
-        _fd = -1;
-    }
-}
-
 // setup
 void WakeUper::setup() {
     _event = EPOLLIN;

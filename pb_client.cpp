@@ -31,14 +31,6 @@ PbClient::PbClient(const char* addr, unsigned short port) : _fd(-1) {
     }
 }
 
-// ~PbClient
-PbClient::~PbClient() {
-    if (_fd != -1) {
-        ::close(_fd);
-        _fd == -1;
-    }
-}
-
 // handle_events
 void PbClient::handle_events(int events) {
     ;

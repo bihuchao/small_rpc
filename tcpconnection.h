@@ -25,12 +25,15 @@ public:
     void set_data_read_callback(const DataReadCallback& data_read_callback) {
         _data_read_callback = data_read_callback;
     }
-    void set_request_callback(const DataReadCallback& request_callback) {
-        _request_callback = request_callback;
-    }
-    void set_write_complete_callback(const DataReadCallback& write_complete_callback) {
+
+    void set_write_complete_callback(const DataWriteCompleteCallback& write_complete_callback) {
         _write_complete_callback = write_complete_callback;
     }
+    void set_close_callback(const ConnectionCloseCallback& close_callback) {
+        _close_callback = close_callback;
+    }
+
+    void close();
 
     TCPConnectionStatus status() { return _status; }
 
@@ -44,9 +47,10 @@ public:
     static const size_t InitialBufferSize = 10240;
 
 private:
+    // TODO 判断是否为空
     DataReadCallback _data_read_callback;
-    RequestCallback _request_callback;
-    WriteCompleteCallback _write_complete_callback;
+    DataWriteCompleteCallback _write_complete_callback;
+    ConnectionCloseCallback _close_callback;
 
     Buffer _rbuf, _wbuf;
 
