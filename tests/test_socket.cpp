@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 #include "base/logging.h"
 #include "base/timestamp.h"
-#include "socket.h"
+#include "net/socket.h"
 
 int main(int argc, char** argv) {
     google::ParseCommandLineFlags(&argc, &argv, false);

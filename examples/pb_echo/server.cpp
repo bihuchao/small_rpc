@@ -5,7 +5,7 @@
 #include "protocols/simple.h"
 #include "base/logging.h"
 #include "base/status_manager.h"
-#include "pb_server.h"
+#include "net/pb_server.h"
 #include "echo.pb.h"
 
 namespace example {

@@ -3,9 +3,7 @@
 // Author: Huchao Bi (bihuchao at qq dot com)
 
 #include "simple.h"
-#include "string.h"
 #include "base/logging.h"
-#include "tcpconnection.h"
 
 namespace small_rpc {
 

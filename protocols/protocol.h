@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "buffer.h"
+#include "net/buffer.h"
 #include "protocol.pb.h"
 #include <ostream>
 

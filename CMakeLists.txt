@@ -35,7 +35,6 @@ target_link_libraries(small_rpc
 )
 target_include_directories(small_rpc
     PUBLIC ${CMAKE_SOURCE_DIR}
-    PUBLIC ${CMAKE_SOURCE_DIR}/net
 )
 
 # unittests

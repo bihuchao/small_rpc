@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 #include "base/status_manager.h"
 #include "base/logging.h"
-#include "eventloop.h"
+#include "net/eventloop.h"
 
 int main(int argc, char** argv) {
     google::ParseCommandLineFlags(&argc, &argv, false);

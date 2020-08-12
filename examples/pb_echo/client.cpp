@@ -5,8 +5,8 @@
 // TODO
 #include "base/logging.h"
 #include "protocols/simple.h"
-#include "pb_client.h"
-#include "pb_controller.h"
+#include "net/pb_client.h"
+#include "net/pb_controller.h"
 #include "echo.pb.h"
 
 int main(int argc, char** argv) {

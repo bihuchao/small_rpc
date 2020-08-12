@@ -3,15 +3,15 @@
 // Author: Huchao Bi (bihuchao at qq dot com)
 
 #include "pb_client.h"
-#include "base/logging.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include "socket.h"
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/message.h>
 #include <google/protobuf/service.h>
-#include <buffer.h>
-#include <protocols/simple.h>
+#include "base/logging.h"
+#include "protocols/simple.h"
+#include "net/socket.h"
+#include "net/buffer.h"
 
 namespace small_rpc {
 

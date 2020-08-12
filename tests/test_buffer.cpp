@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 #include "base/logging.h"
 #include "base/timestamp.h"
-#include "buffer.h"
+#include "net/buffer.h"
 
 DEFINE_uint64(empty_size, 97, "empty size");
 
