@@ -13,7 +13,7 @@ find_package(Protobuf REQUIRED)
 set(CMAKE_CXX_FLAGS -g)
 
 # small_rpc proto
-file(GLOB proto_srcs proto/*.proto)
+file(GLOB proto_srcs protocols/*.proto)
 PROTOBUF_GENERATE_CPP(proto_cpp_srcs proto_cpp_headers ${proto_srcs})
 
 add_library(proto ${proto_cpp_srcs})
