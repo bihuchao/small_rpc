@@ -11,7 +11,7 @@ find_package(Protobuf REQUIRED)
 
 # compile flags
 add_compile_options(-g)
-# add_compile_options(-Wall)
+add_compile_options(-Wall)
 
 # small_rpc proto
 file(GLOB proto_srcs protocols/*.proto)

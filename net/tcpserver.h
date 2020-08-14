@@ -21,12 +21,15 @@ public:
 
     ~TCPServer() {}
 
-    size_t thread_num() const { return _thread_num; }
+    const int& thread_num() const { return _thread_num; }
 
-    void set_thread_num(const size_t& thread_num) {
+    void set_thread_num(const int& thread_num) {
         _thread_num = thread_num;
         if (_thread_num > MaxThreadNum) {
             _thread_num = MaxThreadNum;
+        }
+        if (_thread_num < 0) {
+            _thread_num = 0;
         }
     }
 
@@ -38,12 +41,12 @@ protected:
     EventLoop* _get_next_el();
 
 public:
-    static const size_t MaxThreadNum = 144;
+    static const int MaxThreadNum = 144;
 
 protected:
     EventLoop _el;
     Acceptor _acceptor;
-    size_t _thread_num;
+    int _thread_num;
     std::thread _main_reactor_thread;
 
     // sub reactors

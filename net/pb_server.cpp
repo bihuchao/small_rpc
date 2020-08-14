@@ -199,6 +199,7 @@ void PbServer::response_callback(ReqRespConnPack* pack) {
     // TODO 判读 ctx指针有效性
     bool ret = conn->context()->pack_response(conn->wbuf());
     // TODO judge ret
+    PLOG_FATAL_IF(false) << ret;
 
     conn->set_event(EPOLLOUT);
     // TODO 目前只支持同步调用 异步调用待支持

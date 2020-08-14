@@ -61,17 +61,17 @@ public:
     }
 
     void append(const std::string& str) {
-        _append(str.data(), str.length());
+        _append(str.data(), static_cast<int>(str.length()));
     }
 
     void append(int32_t num) {
         int32_t numm = htonl(num);
-        _append(&numm, sizeof(int32_t));
+        _append(&numm, static_cast<int>(sizeof(int32_t)));
     }
 
     void append(uint32_t num) {
         uint32_t numm = htonl(num);
-        _append(&numm, sizeof(uint32_t));
+        _append(&numm, static_cast<int>(sizeof(uint32_t)));
     }
 
     // append_extra
@@ -89,7 +89,7 @@ public:
 
 private:
     void _append(const void* mem, int memlen) {
-        if (writeable() < memlen) { _data.resize(_data.size() * 2); }
+        if (static_cast<int>(writeable()) < memlen) { _data.resize(_data.size() * 2); }
         memcpy(&_data[_windex], mem, memlen);
         _windex += memlen;
     }

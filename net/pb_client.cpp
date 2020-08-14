@@ -85,7 +85,7 @@ void PbClient::client_conn_callback() {
         _connected.store(true);
     } else {
         LOG_WARNING << "cant connect server with error: " << so_error;
-        
+
     }
     LOG_NOTICE << "connected status: " << _connected.load();
     _event = 0;
@@ -159,7 +159,6 @@ void PbClient::CallMethod(const ::google::protobuf::MethodDescriptor* method,
         }
         while (!_donee) {
             _rbuf.read_fd(_fd);
-            ParseProtocolStatus ret = _ctx->parse_response(_rbuf);
             data_read_callback();
         }
         LOG_NOTICE << "sync end";

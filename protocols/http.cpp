@@ -168,7 +168,7 @@ ParseProtocolStatus HTTPContext::_parse_headers(Buffer& rd_buf) {
 
 // _parse_body
 ParseProtocolStatus HTTPContext::_parse_body(Buffer& rd_buf) {
-    if (rd_buf.readable() >= _body_size) {
+    if (static_cast<int>(rd_buf.readable()) >= _body_size) {
         _payload_view = BufferView(rd_buf, rd_buf.begin(), _body_size);
         return ParseProtocol_PartSuccess;
     }

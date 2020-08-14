@@ -48,9 +48,9 @@ public:
 
 private:
     int _epfd;
+    WakeUper _wakeuper;
     std::vector<struct epoll_event> _events;
     std::atomic<bool> _is_stop;
-    WakeUper _wakeuper;
 
     // 异步调用更改EventLoop状态
     std::vector<std::function<void()>> _funcs;
