@@ -10,6 +10,7 @@
 #include <atomic>
 #include <queue>
 #include <mutex>
+#include <functional>
 
 namespace small_rpc {
 
@@ -39,6 +40,10 @@ private:
     void _epoll_ctl(int op, Channel* channel);
 
 public:
+    // 在别的线程中调用 线程安全
+    void add_func(const std::function<void()>& func);
+
+public:
     static const size_t InitialEventSize = 1024;
 
 private:
@@ -47,9 +52,9 @@ private:
     std::atomic<bool> _is_stop;
     WakeUper _wakeuper;
 
-    // for async 调用
-    std::queue<Channel*> _que; // 这个数据结构再考虑下
-    std::mutex _queue_mtx;
+    // 异步调用更改EventLoop状态
+    std::vector<std::function<void()>> _funcs;
+    std::mutex _funcs_mtx;
     // TODO 实现读写 连接超时
 };
 

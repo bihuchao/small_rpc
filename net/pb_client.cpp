@@ -4,6 +4,7 @@
 
 #include "pb_client.h"
 #include <sys/socket.h>
+#include <sys/epoll.h>
 #include <arpa/inet.h>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/message.h>
@@ -12,22 +13,54 @@
 #include "protocols/protocol.h"
 #include "net/socket.h"
 #include "net/buffer.h"
+#include "net/eventloop.h"
 
 namespace small_rpc {
 
 // PbClient
 // TODO 支持长连接
 // TODO 支持多协议
-PbClient::PbClient(const char* addr, unsigned short port) : _protocol(nullptr) {
+PbClient::PbClient(const char* addr, unsigned short port)
+        : PbClient(nullptr, addr, port) {
+}
+
+// PbClient
+PbClient::PbClient(EventLoop* el, const char* addr, unsigned short port)
+        : TCPConnection(-1, el, false), _protocol(nullptr) , _donee(false) {
+
+    _connected.store(false);
+    _server_addr = get_addr(addr, port);
     _fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (_fd == -1) {
-        PLOG_FATAL << "failed to invoke socket";
+    PLOG_FATAL_IF(_fd == -1) << "failed to invoke socket";
+    if (_el) {
+        // 异步
+        small_rpc::set_nonblocking(_fd);
+
+        set_close_callback(std::bind(&PbClient::close_callback, this));
+        set_data_read_callback(std::bind(&PbClient::data_read_callback, this));
+        set_write_complete_callback(std::bind(&PbClient::write_complete_callback, this));
+        set_client_conn_callback(std::bind(&PbClient::client_conn_callback, this));
+
+        int err = connect(_fd, reinterpret_cast<struct sockaddr*>(&_server_addr),
+            sizeof(_server_addr));
+        if (err == -1) {
+            if (errno == EINPROGRESS) {
+                _event = EPOLLOUT;
+                _el->add_func(std::bind(&EventLoop::update_channel, _el, this));
+            } else {
+                PLOG_FATAL << "failed to invoke connect " << _server_addr;
+            }
+        } else {
+            _connected.store(true);
+        }
+    } else {
+        // 同步
+        int err = connect(_fd, reinterpret_cast<struct sockaddr*>(&_server_addr),
+            sizeof(_server_addr));
+        PLOG_FATAL_IF(err == -1) << "failed to invoke connect " << _server_addr;
+        _connected.store(true);
     }
-    struct sockaddr_in client_addr = get_addr(addr, port);
-    int err = connect(_fd, reinterpret_cast<struct sockaddr*>(&client_addr), sizeof(client_addr));
-    if (err == -1) {
-        PLOG_FATAL << "failed to invoke connect";
-    }
+    LOG_NOTICE << "connected status: " << _connected.load();
 }
 
 // set_protocol
@@ -40,9 +73,61 @@ bool PbClient::set_protocol(Protocol* protocol) {
     return true;
 }
 
-// handle_events
-void PbClient::handle_events(int events) {
-    ;
+// client_conn_callback
+void PbClient::client_conn_callback() {
+    LOG_NOTICE << "in client_conn_callback";
+    int so_error = 0;
+    socklen_t so_error_len = sizeof(so_error);
+    int err = ::getsockopt(_fd, SOL_SOCKET, SO_ERROR, &so_error, &so_error_len);
+    PLOG_FATAL_IF(err == -1) << "failed to invoke ::getsockopt to "
+        << "get SOL_SOCKET SO_ERROR";
+    if (so_error == 0) {
+        _connected.store(true);
+    } else {
+        LOG_WARNING << "cant connect server with error: " << so_error;
+        
+    }
+    LOG_NOTICE << "connected status: " << _connected.load();
+    _event = 0;
+    _el->update_channel(this);
+}
+
+// read_callback
+void PbClient::data_read_callback() {
+    LOG_NOTICE << "in data_read_callback";
+    ParseProtocolStatus ret = _ctx->parse_response(_rbuf);
+    if (ret == ParseProtocol_Error) {
+        LOG_WARNING << "ParseProtocol_Error";
+        return ;
+    }
+    if (ret == ParseProtocol_Success) {
+        response_callback();
+    }
+}
+
+// response_callback
+void PbClient::response_callback() {
+    LOG_NOTICE << "in response_callback";
+    std::string str = _ctx->payload_view().str();
+    // TODO remove class member
+    _response->ParseFromString(str);
+    if (_done) { _done->Run(); }
+    _donee = true;
+    close_callback();
+}
+
+// write_complete_callback
+void PbClient::write_complete_callback() {
+    LOG_NOTICE << "in write_complete_callback";
+    _event = EPOLLIN;
+    _el->update_channel(this);
+}
+
+// close_callback
+void PbClient::close_callback() {
+    LOG_NOTICE << "in close_callback";
+    _event = 0;
+    _el->update_channel(this);
 }
 
 // CallMethod
@@ -50,42 +135,35 @@ void PbClient::CallMethod(const ::google::protobuf::MethodDescriptor* method,
         ::google::protobuf::RpcController* cntl, const ::google::protobuf::Message* request,
         ::google::protobuf::Message* response, ::google::protobuf::Closure* done) {
 
-    Context* ctx = _protocol->new_context();
-    ctx->set_conn_type(ConnType_Short);
-    ctx->set_method(method->name());
-    ctx->set_service(method->service()->name());
-
-    request->SerializeToString(ctx->mutable_payload());
-    if (ctx->payload().length() > UINT32_MAX) {
+    _ctx = _protocol->new_context();
+    _ctx->set_conn_type(ConnType_Short);
+    _ctx->set_method(method->name());
+    _ctx->set_service(method->service()->name());
+    request->SerializeToString(_ctx->mutable_payload());
+    if (_ctx->payload().length() > UINT32_MAX) {
         LOG_WARNING << "req_str length beyond UINT32_MAX";
         return;
     }
+    _ctx->pack_request(_wbuf);
+    _response = response;
+    _done = done;
 
-    Buffer wr_buf;
-    // TODO 判断ctx指针非空
-    ctx->pack_request(wr_buf);
-
-    while (wr_buf.readable() || wr_buf.extraable()) {
-        wr_buf.write_fd(_fd);
-    }
-
-    Buffer rd_buf;
-    while (true) {
-        rd_buf.read_fd(_fd);
-        // TODO 判断ctx指针非空
-        ParseProtocolStatus ret = ctx->parse_response(rd_buf);
-        if (ret == ParseProtocol_Error) {
-            LOG_WARNING << "ParseProtocol_Error";
-            return ;
+    if (done && _el) {
+        // 异步
+        _event = EPOLLOUT;
+        _el->add_func(std::bind(&EventLoop::update_channel, _el, this));
+    } else {
+        // 同步
+        while (_wbuf.readable() || _wbuf.extraable()) {
+            _wbuf.write_fd(_fd);
         }
-        if (ret == ParseProtocol_Success) {
-            break ;
+        while (!_donee) {
+            _rbuf.read_fd(_fd);
+            ParseProtocolStatus ret = _ctx->parse_response(_rbuf);
+            data_read_callback();
         }
+        LOG_NOTICE << "sync end";
     }
-    std::string str = ctx->payload_view().str();
-    response->ParseFromString(str);
-
-    return ;
 }
 
 }; // namespace small_rpc

@@ -73,7 +73,7 @@ EventLoop::~EventLoop() {
 void EventLoop::loop() {
     while (!_is_stop.load()) {
         int err = ::epoll_wait(_epfd, &_events[0], _events.size(), 500); // 500 ms
-        // PLOG_DEBUG << "wakeup from epoll_wait, err: " << err;
+        // LOG_DEBUG << "wakeup from epoll_wait, err: " << err;
         if (err == -1) {
             if (errno == EAGAIN || // for O_NONBLOCK IO
                     errno == EWOULDBLOCK || // same as EAGAIN
@@ -86,6 +86,15 @@ void EventLoop::loop() {
         // 最大1024个描述符，暂不考虑扩容
         for (int i = 0; i < err; ++i) {
             static_cast<Channel*>(_events[i].data.ptr)->handle_events(_events[i].events);
+        }
+        // 执行 _funcs
+        std::vector<std::function<void()>> funcs;
+        {
+            std::unique_lock<std::mutex> lg(_funcs_mtx);
+            std::swap(_funcs, funcs);
+        }
+        for (auto& func : funcs) {
+            func();
         }
     }
 }
@@ -133,6 +142,12 @@ void EventLoop::_epoll_ctl(int op, Channel* channel) {
     PLOG_FATAL_IF(err == -1) << "failed to invoke ::epoll_ctl";
 
     channel->set_sevent(channel->event());
+}
+
+void EventLoop::add_func(const std::function<void()>& func) {
+    std::unique_lock<std::mutex> lg(_funcs_mtx);
+    _funcs.push_back(func);
+    wakeup();
 }
 
 }; // namespace small_rpc

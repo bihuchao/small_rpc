@@ -15,6 +15,8 @@ class TCPConnection;
 using NewConnectionCallback = std::function<void (int)>;
 
 // TCPConnection
+// 客户端连接server
+using ClientConnCallback = std::function<void (TCPConnection*)>;
 // rd_buf 有数据进来
 using DataReadCallback = std::function<void (TCPConnection*)>;
 // wr_buf 数据写完

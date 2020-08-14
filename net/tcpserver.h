@@ -17,11 +17,9 @@ namespace small_rpc {
 class TCPServer {
 public:
     TCPServer(const char* addr, unsigned short port)
-            : _acceptor(&_el, addr, port), _thread_num(0) {}
+            : _acceptor(&_el, addr, port), _thread_num(0), _next_el(-1), _sub_els(nullptr) {}
 
     ~TCPServer() {}
-
-    EventLoop& el() { return _el; }
 
     size_t thread_num() const { return _thread_num; }
 
@@ -36,6 +34,9 @@ public:
 
     bool stop();
 
+protected:
+    EventLoop* _get_next_el();
+
 public:
     static const size_t MaxThreadNum = 144;
 
@@ -44,6 +45,11 @@ protected:
     Acceptor _acceptor;
     size_t _thread_num;
     std::thread _main_reactor_thread;
+
+    // sub reactors
+    int _next_el;
+    EventLoop* _sub_els;
+    std::vector<std::thread> _sub_reactor_threads;
 };
 
 }; // namespace small_rpc

@@ -9,6 +9,7 @@
 #include "protocols/protocol.h"
 #include "callbacks.h"
 #include "protocol.pb.h"
+#include <atomic>
 
 namespace small_rpc {
 
@@ -17,7 +18,8 @@ class EventLoop;
 // TCPConnection
 class TCPConnection : public Channel {
 public:
-    TCPConnection(int conn, EventLoop* el);
+    TCPConnection(int conn, EventLoop* el = nullptr, bool connected = true)
+        : Channel(conn, el), proto_idx(0), _connected(connected), _ctx(nullptr) {}
 
     virtual ~TCPConnection() {}
 
@@ -33,12 +35,17 @@ public:
     void set_close_callback(const ConnectionCloseCallback& close_callback) {
         _close_callback = close_callback;
     }
+    void set_client_conn_callback(const ClientConnCallback& client_conn_callback) {
+        _client_conn_callback = client_conn_callback;
+    }
 
     void close();
 
     const Context* context() { return _ctx; }
     Context** mutable_context() { return &_ctx; }
     void set_context(Context* ctx) { _ctx = ctx; }
+
+    bool connected() { return _connected.load(); }
 
     Buffer& rbuf() { return _rbuf; }
     Buffer& wbuf() { return _wbuf; }
@@ -49,11 +56,15 @@ public:
 public:
     size_t proto_idx;
 
-private:
+protected:
+    // status
+    std::atomic<bool> _connected;
+
+    // context
     Context* _ctx;
 
-    // TODO 判断是否为空
     // callbacks
+    ClientConnCallback _client_conn_callback;
     DataReadCallback _data_read_callback;
     DataWriteCompleteCallback _write_complete_callback;
     ConnectionCloseCallback _close_callback;

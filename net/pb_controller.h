@@ -8,6 +8,8 @@
 
 namespace small_rpc {
 
+class Context;
+
 // PbController : manipulate PbServer and PbClient settings
 class PbController : public ::google::protobuf::RpcController {
 public:
@@ -28,7 +30,12 @@ public:
     void StartCancel() {}
     // Server-side - not supported
     bool IsCanceled() const { return false; }
+
     void NotifyOnCancel(::google::protobuf::Closure* callback) {}
+
+private:
+    // TODO
+    // Context* _ctx;
 };
 
 }; // namespace small_rpc

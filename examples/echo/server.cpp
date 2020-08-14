@@ -2,6 +2,7 @@
 //
 // Author: Huchao Bi (bihuchao at qq dot com)
 
+#include <gflags/gflags.h>
 #include "base/logging.h"
 #include "base/done_guard.h"
 #include "base/status_manager.h"
@@ -9,6 +10,8 @@
 #include "protocols/http.h"
 #include "net/pb_server.h"
 #include "echo.pb.h"
+
+DEFINE_int32(server_thread_num, 2, "server thread num");
 
 namespace example {
 
@@ -21,6 +24,7 @@ public:
             ::google::protobuf::Closure* done) {
         small_rpc::DoneGuard done_guard(done);
         LOG_NOTICE << "enter EchoServiceImpl echo";
+        usleep(1000 * 1000);
         LOG_DEBUG << "request: " << request->DebugString();
         response->set_logid(request->logid());
         response->set_result(request->message() + " powered by EchoService");
@@ -37,6 +41,7 @@ int main(int argc, char** argv) {
     assert(pb_server.add_protocol(new small_rpc::SimpleProtocol()));
     assert(pb_server.add_protocol(new small_rpc::HTTPProtocol()));
     assert(pb_server.add_service(new example::EchoServiceImpl()));
+    pb_server.set_thread_num(FLAGS_server_thread_num);
     pb_server.start();
 
     LOG_NOTICE << "register signal manager.";

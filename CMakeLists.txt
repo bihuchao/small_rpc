@@ -10,7 +10,8 @@ set(Protobuf_PROTOC_EXECUTABLE ${Protobuf_DIR}/bin/protoc)
 find_package(Protobuf REQUIRED)
 
 # compile flags
-set(CMAKE_CXX_FLAGS -g)
+add_compile_options(-g)
+# add_compile_options(-Wall)
 
 # small_rpc proto
 file(GLOB proto_srcs protocols/*.proto)

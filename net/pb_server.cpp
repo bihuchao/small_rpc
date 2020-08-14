@@ -3,6 +3,7 @@
 // Author: Huchao Bi (bihuchao at qq dot com)
 
 #include "pb_server.h"
+#include "socket.h"
 #include "base/logging.h"
 
 namespace small_rpc {
@@ -76,9 +77,18 @@ bool PbServer::_find_service_method(const std::string& service_name,
 
 // new_connection_callback
 void PbServer::new_connection_callback(int conn) {
+    LOG_DEBUG << "in new_connection_callback";
+
     // TODO 分发 Eventloop
-    TCPConnection* http_conn = new TCPConnection(conn, &_el);
+    TCPConnection* http_conn = new TCPConnection(conn, _get_next_el());
     LOG_DEBUG << "in server new_connection_callback";
+
+    // 设置非阻塞IO
+    set_nonblocking(http_conn->fd());
+    // 开启读监听
+    http_conn->set_event(EPOLLIN);
+    http_conn->el()->update_channel(http_conn);
+
     http_conn->set_data_read_callback(
         std::bind(&PbServer::data_read_callback, this, std::placeholders::_1));
     http_conn->set_close_callback(
