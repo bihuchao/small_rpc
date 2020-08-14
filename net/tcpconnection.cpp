@@ -11,7 +11,6 @@ namespace small_rpc {
 
 // handle_events
 void TCPConnection::handle_events(int events) {
-    LOG_DEBUG << "http_connection handle events";
     if (events & EPOLLIN) {
         int n = _rbuf.read_fd(_fd);
         if (n == 0) {

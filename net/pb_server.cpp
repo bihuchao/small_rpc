@@ -58,7 +58,7 @@ bool PbServer::_find_service_method(const std::string& service_name,
     // find service
     auto it = _services.find(service_name);
     if (it == _services.end()) {
-        LOG_WARNING << "Failed to find service: " << service_name;
+        LOG_WARNING << "PbServer failed to find service: " << service_name;
         return false;
     }
     service = it->second.first;
@@ -66,7 +66,7 @@ bool PbServer::_find_service_method(const std::string& service_name,
     ServiceMethods& methods = it->second.second;
     auto it2 = methods.find(method_name);
     if (it2 == methods.end()) {
-        LOG_WARNING << "Failed to find method: " << method_name
+        LOG_WARNING << "PbServer failed to find method: " << method_name
             << ", service: " << service_name;
         return false;
     }
@@ -77,12 +77,8 @@ bool PbServer::_find_service_method(const std::string& service_name,
 
 // new_connection_callback
 void PbServer::new_connection_callback(int conn) {
-    LOG_DEBUG << "in new_connection_callback";
-
     // TODO 分发 Eventloop
     TCPConnection* http_conn = new TCPConnection(conn, _get_next_el());
-    LOG_DEBUG << "in server new_connection_callback";
-
     // 设置非阻塞IO
     set_nonblocking(http_conn->fd());
     // 开启读监听
@@ -99,8 +95,6 @@ void PbServer::new_connection_callback(int conn) {
 
 // data_read_callback
 void PbServer::data_read_callback(TCPConnection* conn) {
-    LOG_DEBUG << "in server data_read_callback";
-
     ParseProtocolStatus res;
     while (conn->proto_idx < _protocols.size()) {
         res = _protocols[conn->proto_idx]->parse_request(conn->rbuf(), conn->mutable_context());
@@ -112,19 +106,19 @@ void PbServer::data_read_callback(TCPConnection* conn) {
         }
     }
     if (conn->proto_idx >= _protocols.size()) {
-        LOG_WARNING << "can't parse with all protocol";
+        LOG_WARNING << "PbServer can't parse with all protocol";
         conn->close();
         return ;
     }
     if (res == ParseProtocol_Error) {
-        LOG_WARNING << "can't parse with protocol " << _protocols[conn->proto_idx]->name();
+        LOG_WARNING << "PbServer can't parse with protocol " << _protocols[conn->proto_idx]->name();
         conn->close();
         return ;
     }
     if (res == ParseProtocol_NoEnoughData) {
         return ;
     }
-    LOG_DEBUG << "get parse context: " << *conn->context();
+    LOG_DEBUG << "PbServer get parse context: " << *conn->context();
 
     // 这里分包成功了, 开始调用 request_callback
     request_callback(conn);
@@ -136,7 +130,6 @@ void PbServer::write_complete_callback(TCPConnection* conn) {
     conn->set_event(0);
     conn->el()->update_channel(static_cast<Channel*>(conn));
     close(conn->fd());
-    LOG_DEBUG <<"finish to write";
 }
 
 // close_callback
@@ -145,7 +138,6 @@ void PbServer::close_callback(TCPConnection* conn) {
     conn->set_event(0);
     conn->el()->update_channel(static_cast<Channel*>(conn));
     close(conn->fd());
-    LOG_DEBUG <<"in close_callback";
 }
 
 // request_callback
@@ -155,7 +147,7 @@ void PbServer::request_callback(TCPConnection* conn) {
     const std::string& pb_data = conn->context()->payload_view().str();
     const std::string& service_name = conn->context()->service();
     const std::string& method_name = conn->context()->method();
-    LOG_DEBUG << "in request_callback: " << service_name << " " << method_name;
+    LOG_DEBUG << "PbServer in request_callback: " << service_name << " " << method_name;
 
     ::google::protobuf::Service* service = nullptr;
     const ::google::protobuf::MethodDescriptor* method = nullptr;
@@ -184,8 +176,6 @@ void PbServer::request_callback(TCPConnection* conn) {
 
 // response_callback
 void PbServer::response_callback(ReqRespConnPack* pack) {
-    LOG_DEBUG << "in response_callback";
-
     // TODO 智能指针
     std::string resp_str;
     assert(pack->_response->SerializeToString(&resp_str));

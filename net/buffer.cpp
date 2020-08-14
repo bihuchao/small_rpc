@@ -24,18 +24,23 @@ int Buffer::find_crlf(const size_t& len) {
 }
 
 // write_buffer => socket
-// -1 - eagain
-// 0  - eof
+// -1 - EAGAIN
+// 0  - EPIPE
 // >0 - data size
+// TODO data 和 extra_data 放到一起
 int Buffer::write_fd(int fd) {
     int total = 0;
     if (readable()) {
-        int n = write(fd, begin(), readable());
+        int n = ::write(fd, begin(), readable());
         if (n == -1) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            if (errno == EAGAIN
+                    || errno == EWOULDBLOCK
+                    || errno == EINTR) {
                 return -1;
+            } else if (errno == EPIPE) {
+                return 0;
             } else {
-                PLOG_FATAL << "failed to invoke write";
+                PLOG_FATAL << "Buffer failed to invoke ::write";
             }
         } else {
             _rindex += n;
@@ -43,12 +48,16 @@ int Buffer::write_fd(int fd) {
         }
     }
     if (extraable()) {
-        int n = write(fd, extra_begin(), extraable());
+        int n = ::write(fd, extra_begin(), extraable());
         if (n == -1) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            if (errno == EAGAIN
+                    || errno == EWOULDBLOCK
+                    || errno == EINTR) {
                 return -1;
-            } else {
-                PLOG_FATAL << "failed to invoke write";
+            } else if (errno == EPIPE) {
+                return 0;
+            }else {
+                PLOG_FATAL << "Buffer failed to invoke ::write";
             }
         } else {
             _extra_index += n;
@@ -59,19 +68,22 @@ int Buffer::write_fd(int fd) {
 }
 
 // socket => read_buffer
-// -1 : eagain
-//  0 : eof
+// -1 : EAGAIN
+//  0 : EOF
 // >0 : data size
+// TODO update ret value - EPIPE / ECONNRESET
 int Buffer::read_fd(int fd) {
     if (writeable() == 0) {
         _data.resize(_data.size() * 2);
     }
-    int n = read(fd, end(), writeable());
+    int n = ::read(fd, end(), writeable());
     if (n == -1) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        if (errno == EAGAIN
+                || errno == EWOULDBLOCK
+                || errno == EINTR) {
             return -1;
         } else {
-            PLOG_FATAL << "failed to invoke read";
+            PLOG_FATAL << "Buffer failed to invoke ::read";
         }
     } else {
         _windex += n;

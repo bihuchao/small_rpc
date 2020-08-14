@@ -20,7 +20,6 @@ Acceptor::Acceptor(EventLoop* el, const char* addr, unsigned short port) {
 
 // handle_events
 void Acceptor::handle_events(int events) {
-    LOG_DEBUG << "acceptor handle events";
     if (events & EPOLLIN) {
         handler_new_connection();
     }
@@ -30,14 +29,17 @@ void Acceptor::handle_events(int events) {
 void Acceptor::handler_new_connection() {
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
-    int conn = accept(_fd, reinterpret_cast<struct sockaddr*>(&client_addr),
+    int conn = ::accept(_fd, reinterpret_cast<struct sockaddr*>(&client_addr),
         &client_addr_len);
     if (conn == -1) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            LOG_DEBUG << "acceptor accept EAGAIN";
+        if (errno == EAGAIN // nonblocking
+                || errno == EWOULDBLOCK // same as EAGAIN
+                || errno == ECONNABORTED // get a RST connection
+                || errno == EINTR) { // interrupt by signal
+            PLOG_DEBUG << "Acceptor accept -1";
             return ;
         } else {
-            PLOG_FATAL << "failed to invoke accept";
+            PLOG_FATAL << "Acceptor failed to invoke ::accept";
         }
     }
     if (_new_connection_callback) {

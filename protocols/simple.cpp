@@ -18,7 +18,7 @@ ParseProtocolStatus SimpleContext::parse_request(Buffer& rd_buf) {
             // magic_num
             int magic_num = rd_buf.peek_int32();
             if (magic_num != SimpleProtocol::MAGIC_NUM) {
-                LOG_WARNING << "invalid magic_num: " << magic_num;
+                LOG_WARNING << "SimpleContext invalid magic_num: " << magic_num;
                 return ParseProtocol_Error;
             }
             rd_buf.retrieve(sizeof(int));
@@ -31,7 +31,7 @@ ParseProtocolStatus SimpleContext::parse_request(Buffer& rd_buf) {
             }
             int conn_type = rd_buf.peek_int32();
             if (!ConnType_IsValid(conn_type)) {
-                LOG_WARNING << "invalid conn_type: " << _conn_type;
+                LOG_WARNING << "SimpleContext invalid conn_type: " << _conn_type;
                 return ParseProtocol_Error;
             }
             rd_buf.retrieve(sizeof(int));
@@ -53,15 +53,12 @@ ParseProtocolStatus SimpleContext::parse_request(Buffer& rd_buf) {
             const char* tmp = static_cast<const char*>(
                 memchr(rd_buf.begin(), '/', path_len));
             if (!tmp) {
-                LOG_WARNING << "failed to parse path";
+                LOG_WARNING << "SimpleContext failed to parse path";
                 return ParseProtocol_Error;
             }
 
             _service = std::string(rd_buf.begin(), tmp - rd_buf.begin());
             _method = std::string(tmp + 1, path_len  - 1 - (tmp - rd_buf.begin()));
-            LOG_DEBUG << "path_len: " << path_len
-                << " service: " << _service
-                << " method: " << _method;
             rd_buf.retrieve(path_len);
             _stage = 3;
         } else if (_stage == 3) {
@@ -71,13 +68,11 @@ ParseProtocolStatus SimpleContext::parse_request(Buffer& rd_buf) {
             }
             // path_len
             uint32_t payload_len = rd_buf.peek_uint32();
-            LOG_DEBUG << "payload_len: " << payload_len;
             if (rd_buf.readable() < payload_len) {
                 return ParseProtocol_NoEnoughData;
             }
             rd_buf.retrieve(sizeof(uint32_t));
             _payload_view = BufferView(rd_buf, payload_len);
-            LOG_DEBUG << "payload: " << _payload_view.str();
             _stage = 4;
             rd_buf.retrieve(payload_len);
         } else {
@@ -128,7 +123,7 @@ ParseProtocolStatus SimpleContext::parse_response(Buffer& rd_buf) {
             // magic_num
             int magic_num = rd_buf.peek_int32();
             if (magic_num != SimpleProtocol::MAGIC_NUM) {
-                LOG_WARNING << "invalid magic_num: " << magic_num;
+                LOG_WARNING << "SimpleContext invalid magic_num: " << magic_num;
                 return ParseProtocol_Error;
             }
             rd_buf.retrieve(sizeof(int));
@@ -141,7 +136,7 @@ ParseProtocolStatus SimpleContext::parse_response(Buffer& rd_buf) {
             }
             int conn_type = rd_buf.peek_int32();
             if (!ConnType_IsValid(conn_type)) {
-                LOG_WARNING << "invalid conn_type: " << _conn_type;
+                LOG_WARNING << "SimpleContext invalid conn_type: " << _conn_type;
                 return ParseProtocol_Error;
             }
             rd_buf.retrieve(sizeof(int));
@@ -150,7 +145,7 @@ ParseProtocolStatus SimpleContext::parse_response(Buffer& rd_buf) {
             // status
             int rpc_status = rd_buf.peek_int32();
             if (!RpcStatus_IsValid(rpc_status)) {
-                LOG_WARNING << "invalid rpc_status: " << rpc_status;
+                LOG_WARNING << "SimpleContext invalid rpc_status: " << rpc_status;
                 return ParseProtocol_Error;
             }
             rd_buf.retrieve(sizeof(int));
@@ -164,13 +159,11 @@ ParseProtocolStatus SimpleContext::parse_response(Buffer& rd_buf) {
             }
             // payload_len
             uint32_t payload_len = rd_buf.peek_uint32();
-            LOG_DEBUG << "payload_len: " << payload_len;
             if (rd_buf.readable() < payload_len) {
                 return ParseProtocol_NoEnoughData;
             }
             rd_buf.retrieve(sizeof(uint32_t));
             _payload_view = BufferView(rd_buf, payload_len);
-            LOG_DEBUG << "payload: " << _payload_view.str();
             _stage = 3;
             rd_buf.retrieve(payload_len);
         } else {
@@ -181,10 +174,9 @@ ParseProtocolStatus SimpleContext::parse_response(Buffer& rd_buf) {
 }
 
 std::ostream& SimpleContext::print(std::ostream& os) const {
-    os << "SimpleContext:"
-        << "\nservice: " << _service
-        << "\nmethod: " << _method
-        << "\npayload: " << _payload_view.str();
+    os << "SimpleContext. service: " << _service
+        << ", method: " << _method
+        << ", payload_size: " << _payload_view.size();
     return os;
 }
 
@@ -198,7 +190,7 @@ ParseProtocolStatus SimpleProtocol::parse_request(Buffer& rd_buf, Context** ctxx
     }
     SimpleContext* ctx = dynamic_cast<SimpleContext*>(*ctxx);
     if (!ctx) {
-        LOG_WARNING << "failed to dynamic_cast SimpleContext.";
+        LOG_WARNING << "SimpleProtocol failed to dynamic_cast SimpleContext.";
         return ParseProtocol_Error;
     }
     return ctx->parse_request(rd_buf);

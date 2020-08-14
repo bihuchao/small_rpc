@@ -30,8 +30,8 @@ PbClient::PbClient(EventLoop* el, const char* addr, unsigned short port)
 
     _connected.store(false);
     _server_addr = get_addr(addr, port);
-    _fd = socket(AF_INET, SOCK_STREAM, 0);
-    PLOG_FATAL_IF(_fd == -1) << "failed to invoke socket";
+    _fd = ::socket(AF_INET, SOCK_STREAM, 0);
+    PLOG_FATAL_IF(_fd == -1) << "PbClient failed to invoke ::socket";
     if (_el) {
         // 异步
         small_rpc::set_nonblocking(_fd);
@@ -41,26 +41,25 @@ PbClient::PbClient(EventLoop* el, const char* addr, unsigned short port)
         set_write_complete_callback(std::bind(&PbClient::write_complete_callback, this));
         set_client_conn_callback(std::bind(&PbClient::client_conn_callback, this));
 
-        int err = connect(_fd, reinterpret_cast<struct sockaddr*>(&_server_addr),
+        int err = ::connect(_fd, reinterpret_cast<struct sockaddr*>(&_server_addr),
             sizeof(_server_addr));
         if (err == -1) {
             if (errno == EINPROGRESS) {
                 _event = EPOLLOUT;
                 _el->add_func(std::bind(&EventLoop::update_channel, _el, this));
             } else {
-                PLOG_FATAL << "failed to invoke connect " << _server_addr;
+                PLOG_FATAL << "PbClient failed to invoke ::connect " << _server_addr;
             }
         } else {
             _connected.store(true);
         }
     } else {
         // 同步
-        int err = connect(_fd, reinterpret_cast<struct sockaddr*>(&_server_addr),
+        int err = ::connect(_fd, reinterpret_cast<struct sockaddr*>(&_server_addr),
             sizeof(_server_addr));
-        PLOG_FATAL_IF(err == -1) << "failed to invoke connect " << _server_addr;
+        PLOG_FATAL_IF(err == -1) << "PbClient failed to invoke ::connect " << _server_addr;
         _connected.store(true);
     }
-    LOG_NOTICE << "connected status: " << _connected.load();
 }
 
 // set_protocol
@@ -75,29 +74,26 @@ bool PbClient::set_protocol(Protocol* protocol) {
 
 // client_conn_callback
 void PbClient::client_conn_callback() {
-    LOG_NOTICE << "in client_conn_callback";
     int so_error = 0;
     socklen_t so_error_len = sizeof(so_error);
     int err = ::getsockopt(_fd, SOL_SOCKET, SO_ERROR, &so_error, &so_error_len);
-    PLOG_FATAL_IF(err == -1) << "failed to invoke ::getsockopt to "
+    PLOG_FATAL_IF(err == -1) << "PbClient failed to invoke ::getsockopt to "
         << "get SOL_SOCKET SO_ERROR";
     if (so_error == 0) {
         _connected.store(true);
     } else {
-        LOG_WARNING << "cant connect server with error: " << so_error;
+        LOG_WARNING << "PbClient can't connect server with error: " << so_error;
 
     }
-    LOG_NOTICE << "connected status: " << _connected.load();
     _event = 0;
     _el->update_channel(this);
 }
 
 // read_callback
 void PbClient::data_read_callback() {
-    LOG_NOTICE << "in data_read_callback";
     ParseProtocolStatus ret = _ctx->parse_response(_rbuf);
     if (ret == ParseProtocol_Error) {
-        LOG_WARNING << "ParseProtocol_Error";
+        LOG_WARNING << "PbClient ParseProtocol_Error";
         return ;
     }
     if (ret == ParseProtocol_Success) {
@@ -107,7 +103,6 @@ void PbClient::data_read_callback() {
 
 // response_callback
 void PbClient::response_callback() {
-    LOG_NOTICE << "in response_callback";
     std::string str = _ctx->payload_view().str();
     // TODO remove class member
     _response->ParseFromString(str);
@@ -118,14 +113,12 @@ void PbClient::response_callback() {
 
 // write_complete_callback
 void PbClient::write_complete_callback() {
-    LOG_NOTICE << "in write_complete_callback";
     _event = EPOLLIN;
     _el->update_channel(this);
 }
 
 // close_callback
 void PbClient::close_callback() {
-    LOG_NOTICE << "in close_callback";
     _event = 0;
     _el->update_channel(this);
 }
@@ -141,7 +134,7 @@ void PbClient::CallMethod(const ::google::protobuf::MethodDescriptor* method,
     _ctx->set_service(method->service()->name());
     request->SerializeToString(_ctx->mutable_payload());
     if (_ctx->payload().length() > UINT32_MAX) {
-        LOG_WARNING << "req_str length beyond UINT32_MAX";
+        LOG_WARNING << "PbClient req_str length beyond UINT32_MAX";
         return;
     }
     _ctx->pack_request(_wbuf);
@@ -152,6 +145,7 @@ void PbClient::CallMethod(const ::google::protobuf::MethodDescriptor* method,
         // 异步
         _event = EPOLLOUT;
         _el->add_func(std::bind(&EventLoop::update_channel, _el, this));
+        LOG_NOTICE << "PbClient async end";
     } else {
         // 同步
         while (_wbuf.readable() || _wbuf.extraable()) {
@@ -161,7 +155,7 @@ void PbClient::CallMethod(const ::google::protobuf::MethodDescriptor* method,
             _rbuf.read_fd(_fd);
             data_read_callback();
         }
-        LOG_NOTICE << "sync end";
+        LOG_NOTICE << "PbClient sync end";
     }
 }
 

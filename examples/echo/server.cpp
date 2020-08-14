@@ -35,6 +35,18 @@ public:
 }; // namespace example
 
 int main(int argc, char** argv) {
+    google::ParseCommandLineFlags(&argc, &argv, false);
+    google::SetCommandLineOption("flagfile", "conf/app.flags");
+    std::shared_ptr<void> gflags_guard(nullptr, [](void*){
+        LOG_DEBUG << "defer gflags";
+        google::ShutDownCommandLineFlags();
+    });
+
+    if (!small_rpc::init_log("log/app.log", small_rpc::DEBUG)) {
+        fprintf(stderr, "failed to init_log\n");
+        return 1;
+    }
+
     LOG_DEBUG << "in main";
     small_rpc::PbServer pb_server("0.0.0.0", 8878);
     // 支持单端口多协议
@@ -44,14 +56,13 @@ int main(int argc, char** argv) {
     pb_server.set_thread_num(FLAGS_server_thread_num);
     pb_server.start();
 
-    LOG_NOTICE << "register signal manager.";
     small_rpc::StatusManager& sm = small_rpc::StatusManager::get_instance();
     sm.register_signals();
     while (!sm.is_close()) {
         sm.wait_for_signal();
     }
-    LOG_NOTICE << "stop pb_server";
 
+    LOG_NOTICE << "stop pb_server";
     pb_server.stop();
     LOG_DEBUG << "end main";
 

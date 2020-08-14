@@ -11,7 +11,7 @@ namespace small_rpc {
 // WakeUper
 WakeUper::WakeUper(EventLoop* el) : Channel(-1, el) {
     _fd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-    PLOG_FATAL_IF(_fd == -1) << "failed to invoke ::eventfd";
+    PLOG_FATAL_IF(_fd == -1) << "WakeUper failed to invoke ::eventfd";
     _event = EPOLLIN;
 }
 
@@ -28,12 +28,11 @@ void WakeUper::wakeup() {
     if (n == -1) {
         if (errno == EAGAIN || // for O_NONBLOCK IO
                 errno == EWOULDBLOCK || // same as EAGAIN
-                errno == EINTR) { // sig interrupt
+                errno == EINTR) { // interrupt by signal
         } else {
-            PLOG_FATAL << "failed to invoke ::write";
+            PLOG_FATAL << "WakeUper failed to invoke ::write";
         }
     }
-    LOG_DEBUG << "WakeUper wakeup";
 }
 
 // handle_events
@@ -46,17 +45,16 @@ void WakeUper::handle_events(int events) {
                     errno == EWOULDBLOCK || // same as EAGAIN
                     errno == EINTR) { // sig interrupt
             } else {
-                PLOG_FATAL << "failed to invoke ::read";
+                PLOG_FATAL << "WakeUper failed to invoke ::read";
             }
         }
-        LOG_DEBUG << "WakeUper read " << wakeup_data;
     }
 }
 
 // EventLoop
 EventLoop::EventLoop() : _epfd(-1), _wakeuper(this), _events(InitialEventSize) {
     _epfd = ::epoll_create(1);
-    PLOG_FATAL_IF(_epfd == -1) << "failed to invoke ::epoll_create";
+    PLOG_FATAL_IF(_epfd == -1) << "EventLoop failed to invoke ::epoll_create";
     _wakeuper.setup();
     _is_stop.store(false);
 }
@@ -80,7 +78,7 @@ void EventLoop::loop() {
                     errno == EINTR) { // sig interrupt
                 continue;
             } else {
-                PLOG_FATAL << "failed to invoke ::epoll_wait";
+                PLOG_FATAL << "EventLoop failed to invoke ::epoll_wait";
             }
         }
         // 最大1024个描述符，暂不考虑扩容
@@ -109,7 +107,6 @@ void EventLoop::stop() {
 // wakeup
 void EventLoop::wakeup() {
     _wakeuper.wakeup();
-    LOG_NOTICE << "EventLoop wakeup";
 }
 
 // update_channel
@@ -139,7 +136,7 @@ void EventLoop::_epoll_ctl(int op, Channel* channel) {
     event.events = channel->event();
 
     int err = ::epoll_ctl(_epfd, op, channel->fd(), &event);
-    PLOG_FATAL_IF(err == -1) << "failed to invoke ::epoll_ctl";
+    PLOG_FATAL_IF(err == -1) << "EventLoop failed to invoke ::epoll_ctl";
 
     channel->set_sevent(channel->event());
 }

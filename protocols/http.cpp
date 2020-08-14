@@ -139,7 +139,8 @@ ParseProtocolStatus HTTPContext::_parse_headers(Buffer& rd_buf) {
             const char* tmp = static_cast<const char*>(
                 memchr(rd_buf.begin(), ':', n));
             if (!tmp || tmp == rd_buf.begin()) {
-                LOG_WARNING << "failed to parse header " << std::string(rd_buf.begin(), n);
+                LOG_WARNING << "HTTPContext failed to parse header "
+                    << std::string(rd_buf.begin(), n);
                 return ParseProtocol_Error;
             }
             std::string key(rd_buf.begin(), tmp - rd_buf.begin());
@@ -149,7 +150,6 @@ ParseProtocolStatus HTTPContext::_parse_headers(Buffer& rd_buf) {
             if (!key.empty() && !value.empty() && _headers.find(key) == _headers.end()) {
                 if (key == "Content-Length") {
                     _body_size = std::stoi(value);
-                    LOG_NOTICE << "_body_size = " << _body_size;
                 }
                 if (key == "Connection" && value == "Keep-alive") {
                     _conn_type = ConnType_Single;
@@ -243,7 +243,7 @@ ParseProtocolStatus HTTPProtocol::parse_request(Buffer& rd_buf, Context** ctxx) 
     if (*ctxx == nullptr) { return ParseProtocol_TryAnotherProtocol; }
     HTTPContext* ctx = dynamic_cast<HTTPContext*>(*ctxx);
     if (!ctx) {
-        LOG_WARNING << "failed to dynamic_cast HTTPContext.";
+        LOG_WARNING << "HTTPProtocol failed to dynamic_cast HTTPContext.";
         return ParseProtocol_Error;
     }
     return ctx->parse_request(rd_buf);
