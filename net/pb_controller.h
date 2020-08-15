@@ -5,6 +5,7 @@
 #pragma once
 
 #include <google/protobuf/service.h>
+#include "protocols/protocol.h"
 
 namespace small_rpc {
 
@@ -13,7 +14,7 @@ class Context;
 // PbController : manipulate PbServer and PbClient settings
 class PbController : public ::google::protobuf::RpcController {
 public:
-    PbController() {}
+    PbController() : _conn_type(ConnType_Short) {}
     virtual ~PbController() {}
 
     // Client-side
@@ -33,9 +34,11 @@ public:
 
     void NotifyOnCancel(::google::protobuf::Closure* callback) {}
 
+    ConnType conn_type() const { return _conn_type; }
+    void set_conn_type(ConnType conn_type) { _conn_type = conn_type; }
+
 private:
-    // TODO
-    // Context* _ctx;
+    ConnType _conn_type;
 };
 
 }; // namespace small_rpc

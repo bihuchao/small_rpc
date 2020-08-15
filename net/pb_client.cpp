@@ -14,12 +14,11 @@
 #include "net/socket.h"
 #include "net/buffer.h"
 #include "net/eventloop.h"
+#include "net/pb_controller.h"
 
 namespace small_rpc {
 
 // PbClient
-// TODO 支持长连接
-// TODO 支持多协议
 PbClient::PbClient(const char* addr, unsigned short port)
         : PbClient(nullptr, addr, port) {
 }
@@ -57,7 +56,14 @@ PbClient::PbClient(EventLoop* el, const char* addr, unsigned short port)
         // 同步
         int err = ::connect(_fd, reinterpret_cast<struct sockaddr*>(&_server_addr),
             sizeof(_server_addr));
-        PLOG_FATAL_IF(err == -1) << "PbClient failed to invoke ::connect " << _server_addr;
+        if (err == -1) {
+            if (errno == ETIMEDOUT || errno == ECONNREFUSED) {
+                PLOG_WARNING << "PbClient failed to invoke ::connect " << _server_addr;
+                return ;
+            } else {
+                PLOG_FATAL << "PbClient failed to invoke ::connect " << _server_addr;
+            }
+        }
         _connected.store(true);
     }
 }
@@ -96,8 +102,8 @@ void PbClient::data_read_callback() {
         LOG_WARNING << "PbClient ParseProtocol_Error";
         return ;
     }
-    _session->_read_response_done = true;
     if (ret == ParseProtocol_Success) {
+        _session->_read_response_done = true;
         response_callback();
     }
 }
@@ -130,14 +136,18 @@ void PbClient::close_callback() {
 
 // CallMethod
 void PbClient::CallMethod(const ::google::protobuf::MethodDescriptor* method,
-        ::google::protobuf::RpcController* cntl, const ::google::protobuf::Message* request,
+        ::google::protobuf::RpcController* cntll, const ::google::protobuf::Message* request,
         ::google::protobuf::Message* response, ::google::protobuf::Closure* done) {
 
+    PbController* cntl = dynamic_cast<PbController*>(cntll);
+
     // new session
+    _rbuf.clear();
+    _wbuf.clear();
     _ctx = _protocol->new_context();
     _session = std::make_shared<PbSession>(cntl, response, done);
 
-    _ctx->set_conn_type(ConnType_Short);
+    _ctx->set_conn_type(cntl->conn_type());
     _ctx->set_method(method->name());
     _ctx->set_service(method->service()->name());
     request->SerializeToString(_ctx->mutable_payload());

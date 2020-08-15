@@ -15,6 +15,9 @@
 DEFINE_bool(use_simple_protocol_rather_than_http_protocol, true,
     "use simple protocol rather than http protocol");
 
+// 长连接CallMethod次数
+DEFINE_int32(call_method_num, 10, "call method num");
+
 int main(int argc, char** argv) {
     google::ParseCommandLineFlags(&argc, &argv, false);
     google::SetCommandLineOption("flagfile", "conf/app.flags");
@@ -37,15 +40,19 @@ int main(int argc, char** argv) {
         assert(client.set_protocol(new small_rpc::HTTPProtocol()));
     }
     small_rpc::PbController cntl;
+    // 长连接
+    cntl.set_conn_type(small_rpc::ConnType_Single);
     example::EchoService_Stub stub(&client);
-    example::EchoRequest req;
-    req.set_logid(1000);
-    req.set_message("helloworld");
-    LOG_DEBUG << "req: " << req.DebugString();
-    example::EchoResponse resp;
-    // 同步调用
-    stub.echo(&cntl, &req, &resp, nullptr);
-    LOG_DEBUG << "resp: " << resp.DebugString();
 
+    for (int i = 0; i < FLAGS_call_method_num; ++i) {
+        example::EchoRequest req;
+        req.set_logid(1000 + i);
+        req.set_message("helloworld " + std::to_string(i));
+        LOG_DEBUG << "req: " << req.DebugString();
+        example::EchoResponse resp;
+        // 同步调用
+        stub.echo(&cntl, &req, &resp, nullptr);
+        LOG_DEBUG << "resp: " << resp.DebugString();
+    }
     return 0;
 }

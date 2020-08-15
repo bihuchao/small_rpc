@@ -76,15 +76,16 @@ public:
 
     // append_extra
     void append_extra(const std::string& extra_data) {
-        _extra_data.append(extra_data);
+        _extra_data = extra_data;
     }
 
     void append_extra(std::string&& extra_data) {
-        if (_extra_data.empty()) {
-            _extra_data.swap(extra_data);
-        } else {
-            _extra_data.append(extra_data);
-        }
+        _extra_data.swap(extra_data);
+    }
+
+    // clear
+    void clear() {
+        _rindex = _windex = _extra_index = 0;
     }
 
 private:

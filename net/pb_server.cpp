@@ -77,8 +77,8 @@ bool PbServer::_find_service_method(const std::string& service_name,
 
 // new_connection_callback
 void PbServer::new_connection_callback(int conn) {
-    // TODO 分发 Eventloop
     TCPConnection* http_conn = new TCPConnection(conn, _get_next_el());
+    LOG_NOTICE << "connect from " << http_conn->fd();
     // 设置非阻塞IO
     set_nonblocking(http_conn->fd());
     // 开启读监听
@@ -98,7 +98,8 @@ void PbServer::data_read_callback(TCPConnection* conn) {
     ParseProtocolStatus res;
     while (conn->proto_idx < _protocols.size()) {
         res = _protocols[conn->proto_idx]->parse_request(conn->rbuf(), conn->mutable_context());
-        // TODO 这里面改成 protocol parse_request + context parse_request
+        // 这里面改成 protocol parse_request + context parse_request
+        // 这个也不用改，现在这种调用方式还可以
         if (res == ParseProtocol_TryAnotherProtocol) {
             ++conn->proto_idx;
         } else {
@@ -126,18 +127,32 @@ void PbServer::data_read_callback(TCPConnection* conn) {
 
 // write_complete_callback
 void PbServer::write_complete_callback(TCPConnection* conn) {
-    // TODO 判断 短连接 / 长连接
-    conn->set_event(0);
-    conn->el()->update_channel(static_cast<Channel*>(conn));
-    close(conn->fd());
+    LOG_DEBUG << "in write_complete_callback";
+    ConnType tmp = conn->context()->conn_type();
+
+    // clear ctx and buffer
+    delete *conn->mutable_context();
+    conn->set_context(nullptr);
+    conn->rbuf().clear();
+    conn->wbuf().clear();
+
+    if (tmp == ConnType_Short) {
+        close_callback(conn);
+    } else {
+        conn->set_event(EPOLLIN);
+        conn->el()->update_channel(static_cast<Channel*>(conn));
+    }
 }
 
 // close_callback
 void PbServer::close_callback(TCPConnection* conn) {
-    // TODO 判断 短连接 / 长连接
+    LOG_DEBUG << "in close_callback";
     conn->set_event(0);
     conn->el()->update_channel(static_cast<Channel*>(conn));
     close(conn->fd());
+    LOG_NOTICE << "disconnect from " << conn->fd();
+
+    delete conn;
 }
 
 // request_callback
@@ -152,7 +167,8 @@ void PbServer::request_callback(TCPConnection* conn) {
     ::google::protobuf::Service* service = nullptr;
     const ::google::protobuf::MethodDescriptor* method = nullptr;
     if (!_find_service_method(service_name, method_name, service, method)) {
-        // TODO 发送错误代码 关闭客户端
+        // 查找对应service method失败，关闭客户端
+        close_callback(conn);
         return ;
     }
 
@@ -160,7 +176,8 @@ void PbServer::request_callback(TCPConnection* conn) {
     google::protobuf::Message* request = service->GetRequestPrototype(method).New();
     if (!request->ParseFromString(pb_data)) {
         delete request;
-        // TODO 解析失败 关闭客户端
+        // 解析失败 关闭客户端
+        close_callback(conn);
         return ;
     }
     google::protobuf::Message* response = service->GetResponsePrototype(method).New();
@@ -176,7 +193,6 @@ void PbServer::request_callback(TCPConnection* conn) {
 
 // response_callback
 void PbServer::response_callback(ReqRespConnPack* pack) {
-    // TODO 智能指针
     std::string resp_str;
     assert(pack->_response->SerializeToString(&resp_str));
     delete pack->_request;
@@ -186,14 +202,14 @@ void PbServer::response_callback(ReqRespConnPack* pack) {
 
     (*conn->mutable_context())->set_rpc_status(RpcStatus_OK);
     *(*conn->mutable_context())->mutable_payload() = std::move(resp_str);
-    // TODO 判读 ctx指针有效性
     bool ret = conn->context()->pack_response(conn->wbuf());
-    // TODO judge ret
-    PLOG_FATAL_IF(false) << ret;
+    if (!ret) { close_callback(conn); }
 
     conn->set_event(EPOLLOUT);
-    // TODO 目前只支持同步调用 异步调用待支持
-    conn->el()->update_channel(static_cast<Channel*>(conn));
+    // 同步调用
+    // conn->el()->update_channel(static_cast<Channel*>(conn));
+    // 异步调用 兼容同步
+    conn->el()->add_func(std::bind(&EventLoop::update_channel, conn->el(), conn));
 }
 
 }; // namespace small_rpc

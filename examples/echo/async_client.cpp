@@ -58,6 +58,7 @@ int main(int argc, char** argv) {
         LOG_DEBUG << "defer gflags";
         google::ShutDownCommandLineFlags();
     });
+    signal(SIGPIPE, SIG_IGN);
 
     // eventloop thread
     std::thread t(&small_rpc::EventLoop::loop, &el);

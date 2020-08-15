@@ -151,9 +151,8 @@ ParseProtocolStatus HTTPContext::_parse_headers(Buffer& rd_buf) {
                 if (key == "Content-Length") {
                     _body_size = std::stoi(value);
                 }
-                if (key == "Connection" && value == "Keep-alive") {
+                if (key == "Connection" && value == "Keep-Alive") {
                     _conn_type = ConnType_Single;
-                    LOG_NOTICE << "keepalive";
                 }
                 _headers[key] = std::move(value);
             }
@@ -178,7 +177,11 @@ ParseProtocolStatus HTTPContext::_parse_body(Buffer& rd_buf) {
 // pack_response ctx => wr_buf
 bool HTTPContext::pack_response(Buffer& wr_buf) const {
     wr_buf.append("HTTP/1.1 200 OK\r\n");
-    wr_buf.append("Connection: close\r\n");
+    if (_conn_type == ConnType_Short) {
+        wr_buf.append("Connection: Close\r\n");
+    } else {
+        wr_buf.append("Connection: Keep-Alive\r\n");
+    }
     wr_buf.append("Content-Type: application/data\r\n");
     wr_buf.append("Content-Length: ");
     wr_buf.append(std::to_string(_payload.length()));
@@ -194,7 +197,11 @@ bool HTTPContext::pack_request(Buffer& wr_buf) const {
     wr_buf.append("/");
     wr_buf.append(_method);
     wr_buf.append(" HTTP/1.1\r\n");
-    wr_buf.append("Connection: close\r\n");
+    if (_conn_type == ConnType_Short) {
+        wr_buf.append("Connection: Close\r\n");
+    } else {
+        wr_buf.append("Connection: Keep-Alive\r\n");
+    }
     wr_buf.append("Content-Type: application/data\r\n");
     // wr_buf.append("Content-Type: application/json");
     wr_buf.append("Content-Length: ");
