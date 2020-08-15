@@ -18,6 +18,22 @@ class Protocol;
 // PbClient
 class PbClient : public TCPConnection, public ::google::protobuf::RpcChannel {
 public:
+    // PbSession
+    class PbSession {
+    public:
+        PbSession(::google::protobuf::RpcController* cntl,
+            ::google::protobuf::Message* response, ::google::protobuf::Closure* done)
+                : _cntl(cntl), _response(response), _done(done), _read_response_done(false) {}
+    private:
+        ::google::protobuf::RpcController* _cntl;
+        ::google::protobuf::Message* _response;
+        ::google::protobuf::Closure* _done;
+        // for sync
+        bool _read_response_done;
+    friend class PbClient;
+    };
+
+public:
     // PbClient
     PbClient(const char* addr, unsigned short port);
     PbClient(EventLoop* el, const char* addr, unsigned short port);
@@ -50,9 +66,8 @@ public:
 private:
     Protocol* _protocol;
     struct sockaddr_in _server_addr;
-    ::google::protobuf::Message* _response;
-    ::google::protobuf::Closure* _done;
-    bool _donee;
+
+    std::shared_ptr<PbSession> _session;
 };
 
 }; // namespace small_rpc

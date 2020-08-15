@@ -26,7 +26,7 @@ PbClient::PbClient(const char* addr, unsigned short port)
 
 // PbClient
 PbClient::PbClient(EventLoop* el, const char* addr, unsigned short port)
-        : TCPConnection(-1, el, false), _protocol(nullptr) , _donee(false) {
+        : TCPConnection(-1, el, false), _protocol(nullptr) {
 
     _connected.store(false);
     _server_addr = get_addr(addr, port);
@@ -96,6 +96,7 @@ void PbClient::data_read_callback() {
         LOG_WARNING << "PbClient ParseProtocol_Error";
         return ;
     }
+    _session->_read_response_done = true;
     if (ret == ParseProtocol_Success) {
         response_callback();
     }
@@ -104,10 +105,14 @@ void PbClient::data_read_callback() {
 // response_callback
 void PbClient::response_callback() {
     std::string str = _ctx->payload_view().str();
-    // TODO remove class member
-    _response->ParseFromString(str);
-    if (_done) { _done->Run(); }
-    _donee = true;
+    _session->_response->ParseFromString(str);
+    if (_session->_done) {
+        _session->_done->Run();
+        // clear session
+        delete _ctx;
+        _ctx = nullptr;
+        _session = nullptr;
+    }
     close_callback();
 }
 
@@ -128,7 +133,10 @@ void PbClient::CallMethod(const ::google::protobuf::MethodDescriptor* method,
         ::google::protobuf::RpcController* cntl, const ::google::protobuf::Message* request,
         ::google::protobuf::Message* response, ::google::protobuf::Closure* done) {
 
+    // new session
     _ctx = _protocol->new_context();
+    _session = std::make_shared<PbSession>(cntl, response, done);
+
     _ctx->set_conn_type(ConnType_Short);
     _ctx->set_method(method->name());
     _ctx->set_service(method->service()->name());
@@ -138,23 +146,24 @@ void PbClient::CallMethod(const ::google::protobuf::MethodDescriptor* method,
         return;
     }
     _ctx->pack_request(_wbuf);
-    _response = response;
-    _done = done;
 
     if (done && _el) {
         // 异步
         _event = EPOLLOUT;
         _el->add_func(std::bind(&EventLoop::update_channel, _el, this));
-        LOG_NOTICE << "PbClient async end";
     } else {
         // 同步
         while (_wbuf.readable() || _wbuf.extraable()) {
             _wbuf.write_fd(_fd);
         }
-        while (!_donee) {
+        while (!_session->_read_response_done) {
             _rbuf.read_fd(_fd);
             data_read_callback();
         }
+        // clear session
+        delete _ctx;
+        _ctx = nullptr;
+        _session = nullptr;
         LOG_NOTICE << "PbClient sync end";
     }
 }
