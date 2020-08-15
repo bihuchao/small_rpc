@@ -6,7 +6,9 @@
 * 支持在不同层级进行编程: 1) 通过Protobuf定义接口文件，借助Protobuf生成的server_stub / client_stub框架代码进行编程; 2) 也通过`TCPConnection`回调函数直接读写`Buffer`。
 * 基于Protobuf接口编程模式支持多种协议: 内置`simple_protocol`、`HTTP`协议，server同时支持**单端口多协议**。
 * 协议层支持与框架代码解耦: 通过继承`Context`和`Protocol`即可实现自定义协议，协议实现见`protocols`。
-* 客户端/服务器均支持长/短连接，客户端支持同步/异步调用。
+* 客户端/服务器均支持长/短连接: 客户端/服务端均支持长/端连接管理，支持同一个TCP连接上多个Method Call。
+* 服务端支持同步/异步Service: 同步Service只需使用DoneGuard，异步Service需要自行保存done对象并在异步调用结束后执行done->Run()。
+* 客户端支持同步/异步调用: 客户端发起RPC交互支持同步调用方式，支持自定义回调函数来异步调用。
 * 基于Linux下`epoll`多路复用API实现。
 * 采用gflags管理配置，采用gtest进行单元测试，便于开发测试与上线。
 
@@ -45,13 +47,18 @@ public:
             const ::example::EchoRequest* request,
             ::example::EchoResponse* response,
             ::google::protobuf::Closure* done) {
+
+        small_rpc::DoneGuard done_guard(done);
         // 用户业务逻辑
         LOG_NOTICE << "enter EchoServiceImpl echo";
         LOG_DEBUG << "request: " << request->DebugString();
         response->set_logid(request->logid());
         response->set_result(request->message() + " powered by EchoService");
         LOG_NOTICE << "exit EchoServiceImpl echo";
-        done->Run();
+
+        // 同步调用
+        // 异步调用 需要手动自行保存 done对象 并调用done->Run();
+        // done_guard.release();
     }
 };
 ```
