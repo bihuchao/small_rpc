@@ -2,21 +2,16 @@
 一个基于[Protobuf](https://developers.google.com/protocol-buffers)和[reactor模式](https://www.dre.vanderbilt.edu/~schmidt/PDF/reactor-siemens.pdf)的C++多线程网络编程框架。
 
 ### Features
-* 采用**流式日志**，用户仅需实现`std::ostream& (std::ostream& os, const T& t);`即可轻松打印自定义类型。
-* 支持在不同层级进行编程: 1) 通过Protobuf定义接口文件，借助Protobuf生成的server_stub / client_stub框架代码进行编程; 2) 也通过`TCPConnection`回调函数直接读写`Buffer`。
-* 基于Protobuf接口编程模式支持多种协议: 内置`simple_protocol`、`HTTP`协议，server同时支持**单端口多协议**。
-* 协议层支持与框架代码解耦: 通过继承`Context`和`Protocol`即可实现自定义协议，协议实现见`protocols`。
-* 客户端/服务器均支持长/短连接: 客户端/服务端均支持长/端连接管理，支持同一个TCP连接上多个Method Call。
-* 服务端支持同步/异步Service: 同步Service只需使用DoneGuard，异步Service需要自行保存done对象并在异步调用结束后执行done->Run()。
-* 客户端支持同步/异步调用: 客户端发起RPC交互支持同步调用方式，支持自定义回调函数来异步调用。
-* 基于Linux下`epoll`多路复用API实现。
-* 采用gflags管理配置，采用gtest进行单元测试，便于开发测试与上线。
-
-### TODO
-* 读写超时支持
+* 采用**流式日志**API: 用户仅需实现`std::ostream& (std::ostream& os, const T& t);`即可轻松打印自定义类型, 支持日志分级、日志文件存在监测以及日志滚动。
+* 服务端不同层级编程支持: a. 通过编写`Protobuf`接口定义文件, 编译得到的Server/Client Stub框架代码, 用户通过继承Stub接口更方便高效地编写实现业务代码, 服务端支持注册多Service/多Method;  b. 通过设定`TCPConnection`不同回调函数直接读写`Buffer`, 完成自定义分包与其余逻辑。
+* 支持多种协议及自定义协议: 内置`SimpleProtocol` / `HTTP`协议, 服务端支持单端口多协议; 实现方面, 协议层与框架代码解耦, 继承基类对象`Context`/`Protocol`即可实现自定义协议, 协议实现见`protocols`。
+* 支持长/短连接管理以及读写超时设定: 客户端/服务端均支持长/端连接管理, 支持同一个TCP连接上多个Method Call; 服务端支持设定读超时、写超时。
+* 服务端支持同步/异步Service: 同步Service只需使用`DoneGuard`, 异步Service需要自行保存done对象并在异步调用结束后执行`done->Run()`。
+* 客户端支持同步/异步调用: 客户端发起RPC交互支持同步调用方式, 支持自定义回调函数来异步调用。
+* 构建工具及依赖: 采用CMake作为构建工具, 采用Gflags管理配置, 采用Gtest管理单元测试。
 
 ### Echo Example
-1. 编写Protobuf接口定义文件，以proto3作为范例
+1. 编写Protobuf接口定义文件, 以proto3作为范例
 ``` protobuf
 syntax = "proto3";
 
@@ -64,6 +59,10 @@ public:
 ```
 3. 编写server逻辑
 ``` C++
+DEFINE_int32(read_timeout_ms, 2000, "read timeout ms");
+DEFINE_int32(write_timeout_ms, 2000, "write timeout ms");
+DEFINE_int32(server_thread_num, 2, "server thread num");
+
 int main(int argc, char** argv) {
     // ... init gflags
     small_rpc::PbServer pb_server("0.0.0.0", 8878);
@@ -72,6 +71,11 @@ int main(int argc, char** argv) {
     assert(pb_server.add_protocol(new small_rpc::SimpleProtocol()));
     // 支持多服务挂载
     assert(pb_server.add_service(new example::EchoServiceImpl()));
+    // 支持读写超时 默认未开启
+    pb_server.set_read_timeout_ms(FLAGS_read_timeout_ms);
+    pb_server.set_write_timeout_ms(FLAGS_write_timeout_ms);
+    // 支持多个eventloop线程 默认为1个主eventloop线程
+    pb_server.set_thread_num(FLAGS_server_thread_num);
     pb_server.start();
     // ... 等待signal
     pb_server.stop();
@@ -82,13 +86,20 @@ int main(int argc, char** argv) {
 
 4. 编写client逻辑
 ``` C++
+DEFINE_bool(use_simple_protocol_rather_than_http_protocol, true,
+    "use simple protocol rather than http protocol");
 int main(int argc, char** argv) {
     // ... init gflags and signal
     small_rpc::PbClient client("127.0.0.1", 8878);
     assert(client.connected());
     // 支持不同协议
-    // assert(client.set_protocol(new small_rpc::SimpleProtocol()));
-    assert(client.set_protocol(new small_rpc::HTTPProtocol()));
+    if (FLAGS_use_simple_protocol_rather_than_http_protocol) {
+        LOG_NOTICE << "client use simple protocol";
+        assert(client.set_protocol(new small_rpc::SimpleProtocol()));
+    } else {
+        LOG_NOTICE << "client use http protocol";
+        assert(client.set_protocol(new small_rpc::HTTPProtocol()));
+    }
     small_rpc::PbController cntl;
     // 短连接
     cntl.set_conn_type(small_rpc::ConnType_Short);

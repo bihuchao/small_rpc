@@ -11,9 +11,9 @@
 #include "net/pb_server.h"
 #include "echo.pb.h"
 
-DEFINE_int32(server_thread_num, 2, "server thread num");
 DEFINE_int32(read_timeout_ms, 2000, "read timeout ms");
 DEFINE_int32(write_timeout_ms, 2000, "write timeout ms");
+DEFINE_int32(server_thread_num, 2, "server thread num");
 
 namespace example {
 
