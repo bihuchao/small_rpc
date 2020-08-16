@@ -33,3 +33,11 @@ TEST(TimeStamp, test_ostream) {
     LOG_DEBUG << "os_str: " << os_str;
     EXPECT_EQ(23, os_str.length());
 }
+
+TEST(TimeStamp, test_operator_less) {
+    small_rpc::TimeStamp ts = small_rpc::TimeStamp::now();
+    small_rpc::TimeStamp ts2 = small_rpc::TimeStamp::after_now_ms(900);
+    LOG_DEBUG << ts;
+    LOG_DEBUG << ts2;
+    EXPECT_TRUE(ts < ts2);
+}

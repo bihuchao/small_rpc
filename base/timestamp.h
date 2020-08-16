@@ -29,6 +29,13 @@ public:
         return buffer;
     }
 
+    bool operator< (const TimeStamp& that) const {
+        if (_sec != that._sec) {
+            return _sec < that._sec;
+        }
+        return _msec < that._msec;
+    }
+
 public:
     static TimeStamp now() {
         struct timeval tv;
@@ -36,6 +43,14 @@ public:
         long sec = tv.tv_sec;
         long msec = tv.tv_usec / 1000;
         return TimeStamp(sec, msec);
+    }
+
+    static TimeStamp after_now_ms(long after_time_ms) {
+        TimeStamp ts = now();
+        long tmp = ts._msec + after_time_ms;
+        ts._sec += tmp / 1000;
+        ts._msec = tmp % 1000;
+        return ts;
     }
 
 private:
