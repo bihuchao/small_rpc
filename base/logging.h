@@ -78,9 +78,26 @@ public:
             open();
             _t = now;
         } else {
-            stat(_filename.c_str(), &_file_stat);
-            unsigned long inode = _file_stat.st_ino;
-            if (_file_node != inode) {
+            int err = stat(_filename.c_str(), &_file_stat);
+            bool reopen = false;
+            do {
+                if (err == -1) {
+                    if (errno == ENOENT) {
+                        reopen = true;
+                        fprintf(stderr, "do_rollover will reopen. stat err: %d, errno: %d\n",
+                            err, errno);
+                    } else {
+                        fprintf(stderr, "do_rollover failed to stat. stat err: %d, errno: %d\n",
+                            err, errno);
+                    }
+                    break;
+                }
+                unsigned long inode = _file_stat.st_ino;
+                if (_file_node != inode) {
+                    reopen = true;
+                }
+            } while (false);
+            if (reopen) {
                 close();
                 open();
                 _t = now;
