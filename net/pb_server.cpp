@@ -79,16 +79,23 @@ bool PbServer::_find_service_method(const std::string& service_name,
 void PbServer::new_connection_callback(int conn) {
     TCPConnection* http_conn = new TCPConnection(conn, _get_next_el());
     LOG_NOTICE << "connect from " << http_conn->fd();
+    // 添加到channels
+    http_conn->el()->add_channel(http_conn, http_conn->ts);
     // 设置非阻塞IO
     set_nonblocking(http_conn->fd());
     // 开启读监听
     http_conn->set_event(EPOLLIN);
     http_conn->el()->update_channel(http_conn);
-
+    if (_read_timeout_ms > 0) {
+        // 设置读超时定时器
+        http_conn->timer_id.fetch_add(1);
+        http_conn->el()->run_after(_read_timeout_ms, std::bind(&PbServer::timeout_callback,
+            http_conn->el(), http_conn, http_conn->ts, http_conn->timer_id.load(), true));
+    }
     http_conn->set_data_read_callback(
         std::bind(&PbServer::data_read_callback, this, std::placeholders::_1));
     http_conn->set_close_callback(
-        std::bind(&PbServer::close_callback, this, std::placeholders::_1));
+        std::bind(&PbServer::close_callback, std::placeholders::_1));
     http_conn->set_write_complete_callback(
         std::bind(&PbServer::write_complete_callback, this, std::placeholders::_1));
 }
@@ -141,6 +148,12 @@ void PbServer::write_complete_callback(TCPConnection* conn) {
     } else {
         conn->set_event(EPOLLIN);
         conn->el()->update_channel(static_cast<Channel*>(conn));
+        if (_read_timeout_ms > 0) {
+            // 设置读超时定时器
+            conn->timer_id.fetch_add(1);
+            conn->el()->run_after(_read_timeout_ms, std::bind(&PbServer::timeout_callback,
+                conn->el(), conn, conn->ts, conn->timer_id.load(), true));
+        }
     }
 }
 
@@ -149,9 +162,10 @@ void PbServer::close_callback(TCPConnection* conn) {
     LOG_DEBUG << "in close_callback";
     conn->set_event(0);
     conn->el()->update_channel(static_cast<Channel*>(conn));
-    close(conn->fd());
+    ::close(conn->fd());
     LOG_NOTICE << "disconnect from " << conn->fd();
-
+    // 添加到channels
+    conn->el()->remove_channel(conn, conn->ts);
     delete conn;
 }
 
@@ -210,6 +224,34 @@ void PbServer::response_callback(ReqRespConnPack* pack) {
     // conn->el()->update_channel(static_cast<Channel*>(conn));
     // 异步调用 兼容同步
     conn->el()->add_func(std::bind(&EventLoop::update_channel, conn->el(), conn));
+
+    // 设置写定时器
+    if (_write_timeout_ms > 0) {
+        // 设置读超时定时器
+        conn->timer_id.fetch_add(1);
+        conn->el()->run_after(_write_timeout_ms, std::bind(&PbServer::timeout_callback,
+            conn->el(), conn, conn->ts, conn->timer_id.load(), false));
+    }
+}
+
+// timeout_callback
+void PbServer::timeout_callback(EventLoop* el, TCPConnection* conn,
+        TimeStamp& conn_ts, int timer_id, bool is_read) {
+
+    // 需要判断conn还在不在
+    if (el->has_channel(conn, conn_ts)) {
+        if (conn->timer_id.load() == timer_id) {
+            LOG_WARNING << "PbServer handle " << (is_read ? "read" : "write")
+                << " timeout. conn: " << conn;
+            close_callback(conn);
+        } else {
+            LOG_DEBUG << "PbServer handle " << (is_read ? "read" : "write")
+                << " timeout. unvalid timer. conn: " << conn;
+        }
+    } else {
+        LOG_DEBUG << "PbServer handle " << (is_read ? "read" : "write")
+            << " timeout. unvalid conn: " << conn;
+    }
 }
 
 }; // namespace small_rpc

@@ -12,6 +12,8 @@
 #include "echo.pb.h"
 
 DEFINE_int32(server_thread_num, 2, "server thread num");
+DEFINE_int32(read_timeout_ms, 2000, "read timeout ms");
+DEFINE_int32(write_timeout_ms, 2000, "write timeout ms");
 
 namespace example {
 
@@ -53,6 +55,8 @@ int main(int argc, char** argv) {
     assert(pb_server.add_protocol(new small_rpc::SimpleProtocol()));
     assert(pb_server.add_protocol(new small_rpc::HTTPProtocol()));
     assert(pb_server.add_service(new example::EchoServiceImpl()));
+    pb_server.set_read_timeout_ms(FLAGS_read_timeout_ms);
+    pb_server.set_write_timeout_ms(FLAGS_write_timeout_ms);
     pb_server.set_thread_num(FLAGS_server_thread_num);
     pb_server.start();
 

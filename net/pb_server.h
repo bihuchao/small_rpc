@@ -34,7 +34,8 @@ public:
     using Services = std::map<std::string, Service>;
 
 public:
-    PbServer(const char* addr, unsigned short port) : TCPServer(addr, port) {
+    PbServer(const char* addr, unsigned short port)
+            : TCPServer(addr, port), _read_timeout_ms(-1), _write_timeout_ms(-1) {
         _acceptor.set_new_connection_callback(
             std::bind(&PbServer::new_connection_callback, this, std::placeholders::_1));
     }
@@ -46,13 +47,20 @@ public:
 
     bool add_service(::google::protobuf::Service* service);
 
+    void set_read_timeout_ms(int read_timeout_ms) { _read_timeout_ms = read_timeout_ms; }
+
+    void set_write_timeout_ms(int write_timeout_ms) { _write_timeout_ms = write_timeout_ms; }
+
     void new_connection_callback(int conn);
 
     void data_read_callback(TCPConnection* conn);
 
     void write_complete_callback(TCPConnection* conn);
 
-    void close_callback(TCPConnection* conn);
+    static void timeout_callback(EventLoop* el, TCPConnection* conn,
+        TimeStamp& conn_ts, int timer_id, bool is_read);
+
+    static void close_callback(TCPConnection* conn);
 
     void request_callback(TCPConnection* conn);
 
@@ -65,6 +73,7 @@ private:
             const ::google::protobuf::MethodDescriptor*& method);
 
 private:
+    int _read_timeout_ms, _write_timeout_ms;
     std::vector<Protocol*> _protocols;
     std::map<std::string, Protocol*> _name2protocols;
     Services _services;

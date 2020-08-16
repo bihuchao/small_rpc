@@ -6,6 +6,7 @@
 
 #include "channel.h"
 #include "buffer.h"
+#include "base/timestamp.h"
 #include "protocols/protocol.h"
 #include "callbacks.h"
 #include "protocol.pb.h"
@@ -19,7 +20,10 @@ class EventLoop;
 class TCPConnection : public Channel {
 public:
     TCPConnection(int conn, EventLoop* el = nullptr, bool connected = true)
-        : Channel(conn, el), proto_idx(0), _connected(connected), _ctx(nullptr) {}
+            : Channel(conn, el), proto_idx(0), ts(TimeStamp::now()),
+              _connected(connected), _ctx(nullptr) {
+        timer_id.store(0);
+    }
 
     virtual ~TCPConnection() {}
 
@@ -55,6 +59,9 @@ public:
 
 public:
     size_t proto_idx;
+    // timestamp
+    TimeStamp ts;
+    std::atomic<int> timer_id;
 
 protected:
     // status

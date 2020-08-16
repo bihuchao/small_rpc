@@ -57,23 +57,26 @@ public:
         wakeup();
     }
 
-    void add_channel(const TimeStamp& ts, Channel* channel) {
+    void add_channel(Channel* channel, const TimeStamp& ts) {
         std::unique_lock<std::mutex> lg(_channels_mtx);
         _channels[channel] = ts;
     }
 
-    void remove_channel(Channel* channel) {
+    void remove_channel(Channel* channel, const TimeStamp& ts) {
         std::unique_lock<std::mutex> lg(_channels_mtx);
         auto it = _channels.find(channel);
-        if (it != _channels.end()) {
+        if (it != _channels.end() && it->second == ts) {
             _channels.erase(it);
         }
     }
 
-    bool has_channel(Channel* channel) {
+    bool has_channel(Channel* channel, const TimeStamp& ts) {
         std::unique_lock<std::mutex> lg(_channels_mtx);
         auto it = _channels.find(channel);
-        return it != _channels.end();
+        if (it != _channels.end() && it->second == ts) {
+            return true;
+        }
+        return false;
     }
 
 public:
@@ -89,7 +92,6 @@ private:
     // 异步调用更改EventLoop状态
     std::vector<std::function<void()>> _funcs;
     std::mutex _funcs_mtx;
-    // TODO 实现读写 连接超时
 
     // TimerManager
     TimerManager _timers;

@@ -30,6 +30,10 @@ public:
         return buffer;
     }
 
+    bool operator== (const TimeStamp& that) const {
+        return _sec == that._sec && _msec == that._msec;
+    }
+
     bool operator< (const TimeStamp& that) const {
         if (_sec != that._sec) {
             return _sec < that._sec;
