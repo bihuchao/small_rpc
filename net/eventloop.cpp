@@ -70,7 +70,20 @@ EventLoop::~EventLoop() {
 // loop
 void EventLoop::loop() {
     while (!_is_stop.load()) {
-        int err = ::epoll_wait(_epfd, &_events[0], _events.size(), 500); // 500 ms
+        int timeout_ms = DefaultEpollTimeout;
+        {
+            std::unique_lock<std::mutex> lg(_timers_mtx);
+            if (!_timers.empty()) {
+                TimeStamp now = TimeStamp::now();
+                TimeStamp latest = _timers.get_latest_timer();
+                timeout_ms = latest - now;
+            }
+        }
+        if (timeout_ms < 0) {
+            timeout_ms = 0;
+        }
+        // LOG_DEBUG << "start to invoke ::epoll_wait, timeout_ms: " << timeout_ms;
+        int err = ::epoll_wait(_epfd, &_events[0], _events.size(), timeout_ms);
         // LOG_DEBUG << "wakeup from epoll_wait, err: " << err;
         if (err == -1) {
             if (errno == EAGAIN || // for O_NONBLOCK IO
@@ -93,6 +106,24 @@ void EventLoop::loop() {
         }
         for (auto& func : funcs) {
             func();
+        }
+        // 执行 timers
+        TimeStamp now = TimeStamp::now();
+        std::vector<TimerManager::Timer> exe_timers;
+        {
+            std::unique_lock<std::mutex> lg(_timers_mtx);
+            while (!_timers.empty()) {
+                const TimerManager::Timer& tm = _timers.top();
+                if (tm.timestamp() < now) {
+                    exe_timers.push_back(tm);
+                    _timers.pop();
+                } else {
+                    break;
+                }
+            }
+        }
+        for (auto& tm : exe_timers) {
+            tm.func()();
         }
     }
 }
@@ -141,6 +172,7 @@ void EventLoop::_epoll_ctl(int op, Channel* channel) {
     channel->set_sevent(channel->event());
 }
 
+// add_func
 void EventLoop::add_func(const std::function<void()>& func) {
     std::unique_lock<std::mutex> lg(_funcs_mtx);
     _funcs.push_back(func);

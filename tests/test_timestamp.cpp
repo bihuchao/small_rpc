@@ -41,3 +41,10 @@ TEST(TimeStamp, test_operator_less) {
     LOG_DEBUG << ts2;
     EXPECT_TRUE(ts < ts2);
 }
+
+TEST(TimeStamp, test_operator_reduce) {
+    small_rpc::TimeStamp ts = small_rpc::TimeStamp::now();
+    small_rpc::TimeStamp ts2 = small_rpc::TimeStamp::after_now_ms(3900);
+    EXPECT_EQ(-3900, ts - ts2);
+    EXPECT_EQ(3900, ts2 - ts);
+}

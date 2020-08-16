@@ -14,6 +14,7 @@ namespace small_rpc {
 // TimeStamp
 class TimeStamp {
 public:
+    TimeStamp() : _sec(0), _msec(0) {}
     TimeStamp(long sec, long msec) : _sec(sec), _msec(msec) {}
     long sec() const { return _sec; }
     long msec() const { return _msec; }
@@ -34,6 +35,10 @@ public:
             return _sec < that._sec;
         }
         return _msec < that._msec;
+    }
+
+    int operator- (const TimeStamp& that) const {
+        return static_cast<int>((_sec - that._sec) * 1000 + _msec - that._msec);
     }
 
 public:
